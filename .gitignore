@@ -7,8 +7,6 @@
 *.ear
 
 # Eclipse
-.project
-.classpath
 .settings
 
 # Idea
