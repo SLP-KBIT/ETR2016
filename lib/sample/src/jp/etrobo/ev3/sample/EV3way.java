@@ -162,22 +162,17 @@ public class EV3way {
      * 走行制御。
      */
     public void controlDrive() {
-        float forward =  0.0F; // 前後進命令
+        float forward =  80.0F; // 前後進命令
         float turn = 0.0F; // 旋回命令
-        forward = 80.0F;
 
         float gyroNow = getGyroValue();                 // ジャイロセンサー値
-        int thetaL = motorPortL.getTachoCount();        // 左モータ回転角度
-        int thetaR = motorPortR.getTachoCount();        // 右モータ回転角度
+        int nowGyroValueL = motorPortL.getTachoCount();
+        int nowGyroValueR = motorPortR.getTachoCount();
         int battery = Battery.getVoltageMilliVolt();    // バッテリー電圧[mV]
-        
-        if ( thetaL > thetaR ) { 
-        	turn = -(thetaL - thetaR); 
-        } else {
-        	turn = thetaR - thetaL;
-        }
-        
-        Balancer.control (forward, turn, gyroNow, GYRO_OFFSET, thetaL, thetaR, battery); // 倒立振子制御
+
+        turn = calcTurn(nowGyroValueL, nowGyroValueR);
+
+        Balancer.control (forward, turn, gyroNow, GYRO_OFFSET, nowGyroValueL, nowGyroValueR, battery); // 倒立振子制御
         motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
         motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
     }
@@ -236,5 +231,18 @@ public class EV3way {
         // leJOS ではジャイロセンサーの角速度値が正負逆になっているので、
         // 倒立振子ライブラリの仕様に合わせる。
         return -sampleGyro[0];
+    }
+
+    /**
+     * モーターの回転角度からターン値を計算する。
+     * @param tachoCountLeft 左モーターの回転角度
+     * @param tachoCountRight 右モーターの回転角度
+     * @return ターン値
+     */
+    private float calcTurn(int tachoCountLeft, int tachoCountRight) {
+         return (tachoCountLeft >= tachoCountRight)
+                ? ((tachoCountLeft - tachoCountRight ) * -1)
+                : (tachoCountRight - tachoCountLeft);
+
     }
 }
