@@ -200,14 +200,6 @@ public class EV3way {
             } else if ( -100.0F > turn){
             	turn = -100.0F;
             }
-
-/*
-            if (getBrightness() > THRESHOLD) {
-                turn = 50.0F;  // 右旋回命令
-            } else {
-                turn = -50.0F; // 左旋回命令
-            }
-*/
         }
 
         float gyroNow = getGyroValue();                 // ジャイロセンサー値
