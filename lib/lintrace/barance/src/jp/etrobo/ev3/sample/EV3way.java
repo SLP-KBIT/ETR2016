@@ -8,8 +8,8 @@ package jp.etrobo.ev3.sample;
 import jp.etrobo.ev3.balancer.Balancer;
 import lejos.hardware.Battery;
 import lejos.hardware.port.BasicMotorPort;
-import lejos.hardware.port.Port;
 import lejos.hardware.port.MotorPort;
+import lejos.hardware.port.Port;
 import lejos.hardware.port.SensorPort;
 import lejos.hardware.port.TachoMotorPort;
 import lejos.hardware.sensor.EV3ColorSensor;
@@ -36,12 +36,19 @@ public class EV3way {
     private static final Port  SENSORPORT_COLOR     = SensorPort.S3;  // カラーセンサーポート
     private static final Port  SENSORPORT_GYRO      = SensorPort.S4;  // ジャイロセンサーポート
     private static final float GYRO_OFFSET          = 0.0F;           // ジャイロセンサーオフセット値
-    private static final float LIGHT_WHITE          = 0.4F;           // 白色のカラーセンサー輝度値
+    private static final float LIGHT_WHITE          = 0.2F;           // 白色のカラーセンサー輝度値
     private static final float LIGHT_BLACK          = 0.0F;           // 黒色のカラーセンサー輝度値
     private static final float SONAR_ALERT_DISTANCE = 0.3F;           // 超音波センサーによる障害物検知距離[m]
     private static final float P_GAIN               = 2.5F;           // 完全停止用モータ制御比例係数
     private static final int   PWM_ABS_MAX          = 60;             // 完全停止用モータ制御PWM絶対最大値
     private static final float THRESHOLD = (LIGHT_WHITE+LIGHT_BLACK)/2.0F;  // ライントレースの閾値
+
+    private static final float DELTA_T = 0.004F;
+    private static final float Kp = 0.36F, Ki = 0.5F, Kd = 0.5F;
+    private static float sensor_val;
+    private static float target_val;
+    private static float[] diff = new float[2];
+    private static float integral;
 
     // モータ制御用オブジェクト
     // EV3LargeRegulatedMotor では PWM 制御ができないので、TachoMotorPort を利用する
@@ -171,12 +178,36 @@ public class EV3way {
             forward = 0.0F;
             turn = 0.0F;
         } else {
-            forward = 50.0F;  // 前進命令
+            forward = 30.0F;  // 前進命令
+
+            //-- ここからPID制御
+            float p, i, d;
+
+            sensor_val = getBrightness();
+            target_val = THRESHOLD;
+
+            diff[0] = diff[1];
+            diff[1] = sensor_val - target_val;
+            integral += (diff[1] + diff[0]) / 2.0 * DELTA_T;
+
+            p = Kp * diff[1];
+            i = Ki * integral;
+            d = Kd * (diff[1] + diff[0]) / DELTA_T;
+            turn = p + i + d;
+
+            if (turn > 100.0F) {
+            	turn = 100.0F;
+            } else if ( -100.0F > turn){
+            	turn = -100.0F;
+            }
+
+/*
             if (getBrightness() > THRESHOLD) {
                 turn = 50.0F;  // 右旋回命令
             } else {
                 turn = -50.0F; // 左旋回命令
             }
+*/
         }
 
         float gyroNow = getGyroValue();                 // ジャイロセンサー値
@@ -191,7 +222,7 @@ public class EV3way {
     /**
      * 走行体完全停止用モータの角度制御
      * @param angle モータ目標角度[度]
-     */	
+     */
     public void controlTail(int angle) {
         float pwm = (float)(angle - motorPortT.getTachoCount()) * P_GAIN; // 比例制御
         // PWM出力飽和処理
