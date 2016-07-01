@@ -61,7 +61,11 @@ public class RemoteTask implements Runnable {
     }
 
     /**
+<<<<<<< HEAD
      * リモートコマンドのチェック。
+=======
+     * リモートコマンドのチェック	。
+>>>>>>> 2d409775bab2bd74a34dbd4a54753f98f4d34788
      * @param command コマンド
      */
     public final boolean checkRemoteCommand(int command) {
@@ -81,4 +85,8 @@ public class RemoteTask implements Runnable {
             try { server.close(); } catch (IOException ex) {}
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 2d409775bab2bd74a34dbd4a54753f98f4d34788
