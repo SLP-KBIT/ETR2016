@@ -36,7 +36,7 @@ public class EV3way {
     private static final Port  SENSORPORT_COLOR     = SensorPort.S3;  // カラーセンサーポート
     private static final Port  SENSORPORT_GYRO      = SensorPort.S4;  // ジャイロセンサーポート
     private static final float GYRO_OFFSET          = 0.0F;           // ジャイロセンサーオフセット値
-    private static final float LIGHT_WHITE          = 0.2F;           // 白色のカラーセンサー輝度値
+    private static final float LIGHT_WHITE          = 0.4F;           // 白色のカラーセンサー輝度値
     private static final float LIGHT_BLACK          = 0.0F;           // 黒色のカラーセンサー輝度値
     private static final float SONAR_ALERT_DISTANCE = 0.3F;           // 超音波センサーによる障害物検知距離[m]
     private static final float P_GAIN               = 2.5F;           // 完全停止用モータ制御比例係数
