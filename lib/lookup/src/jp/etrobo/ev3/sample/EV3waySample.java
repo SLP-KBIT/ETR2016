@@ -5,12 +5,13 @@
  */
 package jp.etrobo.ev3.sample;
 
-import lejos.hardware.lcd.LCD;
-import lejos.utility.Delay;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
+import lejos.hardware.lcd.LCD;
+import lejos.utility.Delay;
 
 /**
  * 2輪倒立振子ライントレースロボットの leJOS EV3 用 Java サンプルプログラム。
@@ -33,13 +34,16 @@ public class EV3waySample {
      * スケジューラとタスクオブジェクトを作成。
      */
     public EV3waySample() {
+    	LCD.clear();
         body = new EV3way();
         body.idling();
         body.reset();
         touchPressed = false;
 
         scheduler  = Executors.newScheduledThreadPool(2);
-        driveTask  = new EV3wayTask(body);
+        driveTask  = new EV3wayTask();
+        StrategyMode.initSetBody(body);
+        StrategyMode.setDriveMode();
         remoteTask = new RemoteTask();
         futureRemote = scheduler.scheduleAtFixedRate(remoteTask, 0, 100, TimeUnit.MILLISECONDS);
     }
@@ -82,7 +86,7 @@ public class EV3waySample {
         if (remoteTask.checkRemoteCommand(RemoteTask.REMOTE_COMMAND_STOP)) { // PC で 's' キー押されたら走行終了
             res = false;
         }
-        return res;	
+        return res;
     }
 
     /**
@@ -118,6 +122,8 @@ public class EV3waySample {
      */
     public static void main(String[] args) {
         LCD.drawString("Please Wait...  ", 0, 4);
+        new StrategyMode();
+
         EV3waySample program = new EV3waySample();
 
         // スタート待ち

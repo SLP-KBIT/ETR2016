@@ -7,6 +7,7 @@ package jp.etrobo.ev3.sample;
 
 import jp.etrobo.ev3.balancer.Balancer;
 import lejos.hardware.Battery;
+import lejos.hardware.Button;
 import lejos.hardware.port.BasicMotorPort;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.Port;
@@ -38,7 +39,7 @@ public class EV3way {
     private static final float GYRO_OFFSET          = 0.0F;           // ジャイロセンサーオフセット値
     private static final float LIGHT_WHITE          = 0.4F;           // 白色のカラーセンサー輝度値
     private static final float LIGHT_BLACK          = 0.0F;           // 黒色のカラーセンサー輝度値
-    private static final float SONAR_ALERT_DISTANCE = 0.3F;           // 超音波センサーによる障害物検知距離[m]
+    private static final float SONAR_ALERT_DISTANCE = 0.2F;           // 超音波センサーによる障害物検知距離[m]
     private static final float P_GAIN               = 2.5F;           // 完全停止用モータ制御比例係数
     private static final int   PWM_ABS_MAX          = 60;             // 完全停止用モータ制御PWM絶対最大値
     private static final float THRESHOLD = (LIGHT_WHITE+LIGHT_BLACK)/2.0F;  // ライントレースの閾値
@@ -78,6 +79,7 @@ public class EV3way {
 
     private int         driveCallCounter = 0;
     private boolean     sonarAlert   = false;
+
 
     /**
      * コンストラクタ。
@@ -176,8 +178,9 @@ public class EV3way {
         float turn    =  0.0F; // 旋回命令
         if (sonarAlert) {           // 障害物を検知したら停止
             forward = 0.0F;
-            turn = 0.0F;
+            //Button.LEDPattern(1);
         } else {
+        	Button.LEDPattern(0);
             forward = 30.0F;  // 前進命令
 
             //-- ここからPID制御
