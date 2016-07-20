@@ -5,6 +5,7 @@
  */
 package jp.etrobo.ev3.sample;
 
+
 /**
  * EV3way を制御するタスク。
  */
@@ -24,8 +25,6 @@ public class EV3wayTask implements Runnable {
     @Override
     public void run() {
     	StrategyMode.strategyRun();
-    	//body.controlDrive();
-        //body.controlTail(EV3way.TAIL_ANGLE_DRIVE);
     }
 }
 

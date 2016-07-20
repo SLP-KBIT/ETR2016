@@ -178,6 +178,7 @@ public class EV3way {
         float turn    =  0.0F; // 旋回命令
         if (sonarAlert) {           // 障害物を検知したら停止
             forward = 0.0F;
+            StrategyMode.setLookupMode();
             //Button.LEDPattern(1);
         } else {
         	Button.LEDPattern(0);
@@ -212,6 +213,67 @@ public class EV3way {
         Balancer.control (forward, turn, gyroNow, GYRO_OFFSET, thetaL, thetaR, battery); // 倒立振子制御
         motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
         motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
+    }
+
+    /**
+     * ルックアップゲート
+     */
+    public void controlLookup() {
+        float forward =  0.0F; // 前後進命令
+        float turn    =  0.0F; // 旋回命令
+        float offset = 0.0F;
+        if (++driveCallCounter <= 40/4*100) {  // 約?秒で尻尾を出す
+        	controlTail(85);
+        	offset = GYRO_OFFSET;
+            float gyroNow = getGyroValue();                 // ジャイロセンサー値
+            int thetaL = motorPortL.getTachoCount();        // 左モータ回転角度
+            int thetaR = motorPortR.getTachoCount();        // 右モータ回転角度
+            int battery = Battery.getVoltageMilliVolt();    // バッテリー電圧[mV]
+            Balancer.control (forward, turn, gyroNow, offset, thetaL, thetaR, battery); // 倒立振子制御
+            motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
+            motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
+        }  else if (++driveCallCounter <= (40/4*100)*10.0) {  // 約?秒で尻尾を出す
+        	Button.LEDPattern(1);
+            controlTail(85);
+            offset = -37.5F;
+            float gyroNow = getGyroValue();                 // ジャイロセンサー値
+            int thetaL = motorPortL.getTachoCount();        // 左モータ回転角度
+            int thetaR = motorPortR.getTachoCount();        // 右モータ回転角度
+            int battery = Battery.getVoltageMilliVolt();    // バッテリー電圧[mV]
+            Balancer.control (forward, turn, gyroNow, offset, thetaL, thetaR, battery); // 倒立振子制御
+            motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
+            motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
+        } else {
+        	controlTail(85);
+
+            //forward = 30.0F;  // 前進命令
+
+            /*
+            //-- ここからPID制御
+            float p, i, d;
+
+            sensor_val = getBrightness();
+            target_val = THRESHOLD;
+
+            diff[0] = diff[1];
+            diff[1] = sensor_val - target_val;
+            integral += (diff[1] + diff[0]) / 2.0 * DELTA_T;
+
+            p = Kp * diff[1];
+            i = Ki * integral;
+            d = Kd * (diff[1] + diff[0]) / DELTA_T;
+            turn = p + i + d;
+
+            if (turn > 100.0F) {
+            	turn = 100.0F;
+            } else if ( -100.0F > turn){
+            	turn = -100.0F;
+            }
+            */
+
+        }
+        motorPortL.controlMotor(20, 1); // 左モータPWM出力セット
+        motorPortR.controlMotor(20, 1); // 右モータPWM出力セット
     }
 
     /**
