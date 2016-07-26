@@ -5,12 +5,15 @@
  */
 package jp.etrobo.ev3.sample;
 
-import lejos.hardware.lcd.LCD;
-import lejos.utility.Delay;
+import java.math.BigDecimal;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
+import lejos.hardware.Button;
+import lejos.hardware.lcd.LCD;
+import lejos.utility.Delay;
 
 /**
  * 2輪倒立振子ライントレースロボットの leJOS EV3 用 Java サンプルプログラム。
@@ -27,6 +30,10 @@ public class EV3waySample {
     // タスク
     private EV3wayTask  driveTask;   // 走行制御
     private RemoteTask  remoteTask;  // リモート制御
+
+    // PIDセッティング用
+	private int pidSelect = 0;
+	private BigDecimal p = 0.36,i = 0.5, d = 0.5;
 
     /**
      * コンストラクタ。
@@ -82,7 +89,7 @@ public class EV3waySample {
         if (remoteTask.checkRemoteCommand(RemoteTask.REMOTE_COMMAND_STOP)) { // PC で 's' キー押されたら走行終了
             res = false;
         }
-        return res;	
+        return res;
     }
 
     /**
@@ -113,25 +120,81 @@ public class EV3waySample {
         scheduler.shutdownNow();
     }
 
+    public void pidSetting() {
+		if(Button.UP.isDown()){
+			pidSelect--;
+			if(pidSelect < 0) {
+				pidSelect = 0;
+			}
+		}
+		if(Button.DOWN.isDown()){
+			pidSelect++;
+			if(pidSelect > 2) {
+				pidSelect = 2;
+			}
+		}
+		if(Button.RIGHT.isDown()){
+	    	switch (pidSelect) {
+	    		case 0:
+	    			p = p + 0.01F;
+	    			break;
+	    		case 1:
+	    			i = i + 0.01F;
+	    			break;
+	    		case 2:
+	    			d = d + 0.01F;
+	    			break;
+	    	}
+		}
+		if(Button.LEFT.isDown()){
+	    	switch (pidSelect) {
+	    		case 0:
+	    		  p = p - 0.01F; break;
+	    		case 1:
+	    		  i = i - 0.01F; break;
+	    		case 2:
+	    		  d = d - 0.01F; break;
+	    	}
+		}
+
+		BigDecimal bd = new BigDecimal(p);
+
+		LCD.clear();
+		LCD.drawString("P:" + p, 0, 0);
+		LCD.drawString("I:" + i, 0, 1);
+		LCD.drawString("D:" + d, 0, 2);
+		LCD.drawString("select:" + pidSelect, 0, 4);
+		LCD.refresh();
+    }
+
+    public void setPIDParm(){
+    	body.setPIDParm(p, i, d);
+    }
+
     /**
      * メイン
      */
     public static void main(String[] args) {
-        LCD.drawString("Please Wait...  ", 0, 4);
-        EV3waySample program = new EV3waySample();
+    	LCD.drawString("Please Wait...  ", 0, 4);
+		EV3waySample program = new EV3waySample();
 
-        // スタート待ち
-        LCD.drawString("Touch to START", 0, 4);
-        while (program.waitForStart()) {
-            Delay.msDelay(100);
-        }
+    	// スタート待ち
+    	LCD.drawString("Touch to START", 0, 4);
 
-        LCD.drawString("Running       ", 0, 4);
-        program.start();
-        while (program.waitForStop()) {
-            Delay.msDelay(100);
-        }
-        program.stop();
-        program.shutdown();
+    	while (program.waitForStart()) {
+    		program.pidSetting();
+    		Delay.msDelay(100);
+    	}
+    	program.setPIDParm();
+
+    	LCD.drawString("Running       ", 0, 4);
+    	program.start();
+    	while (program.waitForStop()) {
+    		Delay.msDelay(100);
+    	}
+
+
+    	program.stop();
+    	program.shutdown();
     }
 }
