@@ -31,9 +31,14 @@ public class EV3waySample {
     private EV3wayTask  driveTask;   // 走行制御
     private RemoteTask  remoteTask;  // リモート制御
 
-    // PIDセッティング用
-	private int pidSelect = 0;
-	private BigDecimal p = 0.36,i = 0.5, d = 0.5;
+    // パラメータセッティング用
+	private int parmSelect = 0;
+	private BigDecimal p = new BigDecimal("0.36");
+	private BigDecimal i = new BigDecimal("0.5");
+	private BigDecimal d = new BigDecimal("0.5");
+	private BigDecimal forward = new BigDecimal("30.0");
+	private BigDecimal fixPIDValue = new BigDecimal("0.01");
+	private BigDecimal fixForwardValue = new BigDecimal("5.0");
 
     /**
      * コンストラクタ。
@@ -120,56 +125,79 @@ public class EV3waySample {
         scheduler.shutdownNow();
     }
 
-    public void pidSetting() {
+    /**
+     * パラメータをボタンで設定
+     */
+    public void parmSetting() {
 		if(Button.UP.isDown()){
-			pidSelect--;
-			if(pidSelect < 0) {
-				pidSelect = 0;
+			parmSelect--;
+			if(parmSelect < 0) {
+				parmSelect = 0;
 			}
 		}
 		if(Button.DOWN.isDown()){
-			pidSelect++;
-			if(pidSelect > 2) {
-				pidSelect = 2;
+			parmSelect++;
+			if(parmSelect > 3) {
+				parmSelect = 3;
 			}
 		}
 		if(Button.RIGHT.isDown()){
-	    	switch (pidSelect) {
+	    	switch (parmSelect) {
 	    		case 0:
-	    			p = p + 0.01F;
+	    			p = p.add(fixPIDValue);
 	    			break;
 	    		case 1:
-	    			i = i + 0.01F;
+	    			i = i.add(fixPIDValue);
 	    			break;
 	    		case 2:
-	    			d = d + 0.01F;
+	    			d = d.add(fixPIDValue);
+	    			break;
+	    		case 3:
+	    			forward = forward.add(fixForwardValue);
 	    			break;
 	    	}
 		}
 		if(Button.LEFT.isDown()){
-	    	switch (pidSelect) {
+	    	switch (parmSelect) {
 	    		case 0:
-	    		  p = p - 0.01F; break;
+	    			p = p.subtract(fixPIDValue);
+	    			break;
 	    		case 1:
-	    		  i = i - 0.01F; break;
+	    			i = i.subtract(fixPIDValue);
+	    			break;
 	    		case 2:
-	    		  d = d - 0.01F; break;
+	    			d = d.subtract(fixPIDValue);
+	    			break;
+	    		case 3:
+	    			forward = forward.subtract(fixForwardValue);
+	    			break;
 	    	}
 		}
-
-		BigDecimal bd = new BigDecimal(p);
-
 		LCD.clear();
 		LCD.drawString("P:" + p, 0, 0);
 		LCD.drawString("I:" + i, 0, 1);
 		LCD.drawString("D:" + d, 0, 2);
-		LCD.drawString("select:" + pidSelect, 0, 4);
+		LCD.drawString("forward:" + forward, 0, 3);
+		LCD.drawString("select:" + parmSelect, 0, 5);
 		LCD.refresh();
     }
 
-    public void setPIDParm(){
-    	body.setPIDParm(p, i, d);
+    /**
+     * PIDのパラメータを登録
+     */
+    private void setPIDParm(){
+    	//float Kp = p.floatValue(), Ki = i.floatValue(), Kd = d.floatValue();
+    	float Kp = 0.36F, Ki = 0.5F, Kd = 0.5F;
+    	body.setPIDParm(Kp, Ki, Kd);
     }
+
+    /**
+     * フォワード値のパラメータを登録
+     */
+	private void setForwardParm() {
+		float baseForward = forward.floatValue();
+		body.setForwardParm(baseForward);
+	}
 
     /**
      * メイン
@@ -182,17 +210,18 @@ public class EV3waySample {
     	LCD.drawString("Touch to START", 0, 4);
 
     	while (program.waitForStart()) {
-    		program.pidSetting();
+    		program.parmSetting();
     		Delay.msDelay(100);
     	}
     	program.setPIDParm();
+    	program.setForwardParm();
+    	LCD.clear();
 
     	LCD.drawString("Running       ", 0, 4);
     	program.start();
     	while (program.waitForStop()) {
     		Delay.msDelay(100);
     	}
-
 
     	program.stop();
     	program.shutdown();

@@ -226,7 +226,7 @@ public class EV3way {
         motorPortT.controlMotor((int)pwm, 1);
     }
 
-    /*
+    /**
      * 超音波センサーによる障害物検知
      * @return true(障害物あり)/false(障害物無し)
      */
@@ -238,7 +238,7 @@ public class EV3way {
         return false;
     }
 
-    /*
+    /**
      * 超音波センサーにより障害物との距離を取得する。
      * @return 障害物との距離(m)。
      */
@@ -247,7 +247,7 @@ public class EV3way {
         return sampleDistance[0];
     }
 
-    /*
+    /**
      * カラーセンサーから輝度値を取得する。
      * @return 輝度値。
      */
@@ -256,7 +256,7 @@ public class EV3way {
         return sampleLight[0];
     }
 
-    /*
+    /**
      * ジャイロセンサーから角速度を取得する。
      * @return 角速度。
      */

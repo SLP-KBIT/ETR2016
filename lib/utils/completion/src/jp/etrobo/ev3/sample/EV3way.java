@@ -7,7 +7,6 @@ package jp.etrobo.ev3.sample;
 
 import jp.etrobo.ev3.balancer.Balancer;
 import lejos.hardware.Battery;
-import lejos.hardware.lcd.LCD;
 import lejos.hardware.port.BasicMotorPort;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.Port;
@@ -45,7 +44,9 @@ public class EV3way {
     private static final float THRESHOLD = (LIGHT_WHITE+LIGHT_BLACK)/2.0F;  // ライントレースの閾値
 
     private static final float DELTA_T = 0.004F;
-    private static float Kp = 0.36F, Ki = 0.5F, Kd = 0.5F;
+    private static float Kp = 0.0F, Ki = 0.0F, Kd = 0.0F;
+    //private static float Kp = 0.36F, Ki = 0.5F, Kd = 0.5F;
+    private static float baseForward = 0.0F;
     private static float sensor_val;
     private static float target_val;
     private static float[] diff = new float[2];
@@ -179,7 +180,7 @@ public class EV3way {
             forward = 0.0F;
             turn = 0.0F;
         } else {
-            forward = 30.0F;  // 前進命令
+            forward = baseForward;  // 前進命令
 
             //-- ここからPID制御
             float p, i, d;
@@ -201,11 +202,13 @@ public class EV3way {
             } else if ( -100.0F > turn){
             	turn = -100.0F;
             }
-
-    		LCD.clear();
+            /*
+             * デバッグ用  表示しながら走ると倒れる
     		LCD.drawString("P:" + Kp, 0, 0);
     		LCD.drawString("I:" + Ki, 0, 1);
     		LCD.drawString("D:" + Kd, 0, 2);
+    		LCD.drawString("forward:" + forward, 0, 3);
+             */
         }
 
         float gyroNow = getGyroValue();                 // ジャイロセンサー値
@@ -217,7 +220,6 @@ public class EV3way {
         motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
     }
 
-
     /**
      * PIDのパラメータをセット
      *
@@ -226,6 +228,14 @@ public class EV3way {
     	Kp = p;
     	Ki = i;
     	Kd = d;
+    }
+
+    /**
+     * フォワード値のパラメータをセット
+     *
+     */
+    public void setForwardParm(float f){
+    	baseForward = f;
     }
 
     /**
