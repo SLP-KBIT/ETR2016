@@ -34,10 +34,15 @@ public class EV3waySample {
     // パラメータセッティング用
 	private int parmSelect = 0;
 	private BigDecimal p = new BigDecimal("0.36");
-	private BigDecimal i = new BigDecimal("0.5");
-	private BigDecimal d = new BigDecimal("0.5");
+	private BigDecimal i = new BigDecimal("1.2");
+	private BigDecimal d = new BigDecimal("0.027");
+
+	//private BigDecimal p = new BigDecimal("0.36");
+	//private BigDecimal i = new BigDecimal("0.004");
+	//private BigDecimal d = new BigDecimal("0.03");
+
 	private BigDecimal forward = new BigDecimal("30.0");
-	private BigDecimal fixPIDValue = new BigDecimal("0.01");
+	private BigDecimal fixPIDValue = new BigDecimal("0.001");
 	private BigDecimal fixForwardValue = new BigDecimal("5.0");
 
     /**
@@ -186,8 +191,7 @@ public class EV3waySample {
      * PIDのパラメータを登録
      */
     private void setPIDParm(){
-    	//float Kp = p.floatValue(), Ki = i.floatValue(), Kd = d.floatValue();
-    	float Kp = 0.36F, Ki = 0.5F, Kd = 0.5F;
+    	float Kp = p.floatValue(), Ki = i.floatValue(), Kd = d.floatValue();
     	body.setPIDParm(Kp, Ki, Kd);
     }
 

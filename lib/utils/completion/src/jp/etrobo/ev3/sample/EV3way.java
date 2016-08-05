@@ -194,7 +194,7 @@ public class EV3way {
 
             p = Kp * diff[1];
             i = Ki * integral;
-            d = Kd * (diff[1] + diff[0]) / DELTA_T;
+            d = Kd * (diff[1] - diff[0]) / DELTA_T;
             turn = p + i + d;
 
             if (turn > 100.0F) {
@@ -202,13 +202,14 @@ public class EV3way {
             } else if ( -100.0F > turn){
             	turn = -100.0F;
             }
-            /*
-             * デバッグ用  表示しながら走ると倒れる
+/*
+            // デバッグ用  表示しながら走ると倒れる
     		LCD.drawString("P:" + Kp, 0, 0);
     		LCD.drawString("I:" + Ki, 0, 1);
     		LCD.drawString("D:" + Kd, 0, 2);
     		LCD.drawString("forward:" + forward, 0, 3);
-             */
+    		LCD.drawString("turn:" + turn, 0, 4);
+*/
         }
 
         float gyroNow = getGyroValue();                 // ジャイロセンサー値
@@ -218,6 +219,8 @@ public class EV3way {
         Balancer.control (forward, turn, gyroNow, GYRO_OFFSET, thetaL, thetaR, battery); // 倒立振子制御
         motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
         motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
+        //motorPortL.controlMotor(0, 1); // 左モータPWM出力セット
+        //motorPortR.controlMotor(0, 1); // 右モータPWM出力セット
     }
 
     /**
