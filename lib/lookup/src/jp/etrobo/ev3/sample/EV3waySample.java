@@ -122,7 +122,6 @@ public class EV3waySample {
      */
     public static void main(String[] args) {
         LCD.drawString("Please Wait...  ", 0, 4);
-        new StrategyMode();
 
         EV3waySample program = new EV3waySample();
 
