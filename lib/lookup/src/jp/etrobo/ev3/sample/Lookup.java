@@ -16,7 +16,7 @@ import lejos.utility.Delay;
 /**
  * 2輪倒立振子ライントレースロボットの leJOS EV3 用 Java サンプルプログラム。
  */
-public class EV3waySample {
+public class Lookup {
     private EV3way         body;            // EV3 本体
     private boolean        touchPressed;    // タッチセンサーが押されたかの状態
 
@@ -33,7 +33,7 @@ public class EV3waySample {
      * コンストラクタ。
      * スケジューラとタスクオブジェクトを作成。
      */
-    public EV3waySample() {
+    public Lookup() {
     	LCD.clear();
         body = new EV3way();
         body.idling();
@@ -123,7 +123,7 @@ public class EV3waySample {
     public static void main(String[] args) {
         LCD.drawString("Please Wait...  ", 0, 4);
 
-        EV3waySample program = new EV3waySample();
+        Lookup program = new Lookup();
 
         // スタート待ち
         LCD.drawString("Touch to START", 0, 4);

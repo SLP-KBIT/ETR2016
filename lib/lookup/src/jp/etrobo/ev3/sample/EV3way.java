@@ -216,6 +216,18 @@ public class EV3way {
     }
 
     /**
+     * クラス外からバランサーAPIの設定
+     *
+     */
+    public void setBalancerParm(float forward, float turn, float gyroOffset){
+        float gyroNow = getGyroValue();                 // ジャイロセンサー値
+        int thetaL = motorPortL.getTachoCount();        // 左モータ回転角度
+        int thetaR = motorPortR.getTachoCount();        // 右モータ回転角度
+        int battery = Battery.getVoltageMilliVolt();    // バッテリー電圧[mV]
+        Balancer.control (forward, turn, gyroNow, gyroOffset, thetaL, thetaR, battery); // 倒立振子制御
+    }
+
+    /**
      * 超音波センサーにより障害物との距離を取得する。
      * @return 障害物との距離(m)。
      */

@@ -10,7 +10,7 @@ public class DriveMode implements Mode {
 	private boolean     sonarAlert   = false;
 
 	private static final float SONAR_ALERT_DISTANCE = 0.2F;           // 超音波センサーによる障害物検知距離[m]
-	private static final int TAIL_ANGLE_DRIVE = 3;           // 超音波センサーによる障害物検知距離[m]
+	private static final int TAIL_ANGLE_DRIVE = 3;           // バランス走行時の角度[度]
 
 	DriveMode(EV3way b){
 		body = b;

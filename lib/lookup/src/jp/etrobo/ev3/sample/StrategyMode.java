@@ -10,8 +10,8 @@ public final class StrategyMode {
     }
 
     /**
-     * bodyの格納
-     * サンプルコードを崩さないための処置
+     * EV3Wayの格納
+     *
      */
     public static void initSetBody(EV3way b){
     	body = b;

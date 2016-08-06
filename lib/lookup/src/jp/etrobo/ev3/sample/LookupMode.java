@@ -1,43 +1,52 @@
 package jp.etrobo.ev3.sample;
 
 import jp.etrobo.ev3.balancer.Balancer;
+import lejos.hardware.Button;
+import lejos.utility.Delay;
 
 public class LookupMode implements Mode {
 
 	private EV3way body;
-	private int stateNum;
-	private int timeCounter;
-	private final int tailStateAngle = 85;
+	private int stateNum = 0;
+	private int timeCounter = 0;
+
+    public static final int TAIL_ANGLE_TAIL = 85;    // 尻尾走行時の角度[度]
 
 	LookupMode(EV3way body){
 		this.body = body;
-		stateNum = 0;
-		timeCounter = 0;
 	}
 
 	public void strategyRun(){
 		float turn;
 		switch(stateNum){
-			case 0:
-				body.controlTail(tailStateAngle);
+			case 0:  // 尻尾下ろし
+				body.controlTail(TAIL_ANGLE_TAIL);
 				turn = body.getPIDTurnValue();
 				body.setBalancerParm(0.0F, turn);
-		        body.motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
-		        body.motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
-
-				if(++timeCounter < 400/4){ // 約400ms
+				body.motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
+				body.motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
+				if(++timeCounter > 3000/4){ // 約3000ms
 					stateNum = 1;
 					timeCounter = 0;
 				}
 				break;
-			case 1:
-				body.controlTail(tailStateAngle);
-				body.setBalancerParm(0.0F, 0.0F);
-		        body.motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
-		        body.motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
+			case 1:  // 倒れる
+				body.controlTail(TAIL_ANGLE_TAIL);
+				body.setBalancerParm(0.0F, 0.0F, -30.0F);
+				body.motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
+				body.motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
+				if(++timeCounter > 200/4){ // 約200ms
+					Delay.msDelay(1000); // 倒れ切るまで停止
+					stateNum = 2;
+					timeCounter = 0;
+				}
+				break;
+			case 2:
+				Button.LEDPattern(1);
+				body.controlTail(TAIL_ANGLE_TAIL);
+				body.motorPortL.controlMotor(0, 1); // 左モータPWM出力セット
+		        body.motorPortR.controlMotor(0, 1); // 右モータPWM出力セット
 				break;
 		}
-
-
 	}
 }
