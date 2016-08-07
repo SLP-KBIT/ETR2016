@@ -10,7 +10,7 @@ public class LookupMode implements Mode {
 	private int stateNum = 0;
 	private int timeCounter = 0;
 
-    public static final int TAIL_ANGLE_TAIL = 85;    // 尻尾走行時の角度[度]
+    public static final int TAIL_ANGLE = 85;    // 尻尾走行時の角度[度]
 
 	LookupMode(EV3way body){
 		this.body = body;
@@ -20,7 +20,7 @@ public class LookupMode implements Mode {
 		float turn;
 		switch(stateNum){
 			case 0:  // 尻尾下ろし
-				body.controlTail(TAIL_ANGLE_TAIL);
+				body.controlTail(TAIL_ANGLE);
 				turn = body.getPIDTurnValue();
 				body.setBalancerParm(0.0F, turn);
 				body.motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
@@ -31,7 +31,7 @@ public class LookupMode implements Mode {
 				}
 				break;
 			case 1:  // 倒れる
-				body.controlTail(TAIL_ANGLE_TAIL);
+				body.controlTail(TAIL_ANGLE);
 				body.setBalancerParm(0.0F, 0.0F, -30.0F);
 				body.motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
 				body.motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
@@ -43,7 +43,7 @@ public class LookupMode implements Mode {
 				break;
 			case 2:
 				Button.LEDPattern(1);
-				body.controlTail(TAIL_ANGLE_TAIL);
+				body.controlTail(TAIL_ANGLE);
 				body.motorPortL.controlMotor(0, 1); // 左モータPWM出力セット
 		        body.motorPortR.controlMotor(0, 1); // 右モータPWM出力セット
 				break;

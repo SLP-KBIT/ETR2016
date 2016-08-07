@@ -130,7 +130,7 @@ public class EV3way {
      * センサー、モータ、倒立振子ライブラリのリセット。
      */
     public void reset() {
-        gyro.reset();
+        //gyro.reset();
         motorPortL.controlMotor(0, 0);
         motorPortR.controlMotor(0, 0);
         motorPortT.controlMotor(0, 0);
@@ -138,6 +138,13 @@ public class EV3way {
         motorPortR.resetTachoCount();   // 右モータエンコーダリセット
         motorPortT.resetTachoCount();   // 尻尾モータエンコーダリセット
         Balancer.init();                // 倒立振子制御初期化
+    }
+
+    /**
+     * ジャイロセンサーの初期化
+     */
+    public void resetGyro() {
+        gyro.reset();
     }
 
     /**
