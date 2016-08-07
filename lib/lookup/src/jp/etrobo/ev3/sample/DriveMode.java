@@ -23,13 +23,13 @@ public class DriveMode implements Mode {
             sonarAlert = alertObstacle();  // 障害物検知
             driveCallCounter = 0;
         }
-        float forward =  5.0F; // 前後進命令
-        float turn    =  0.0F; // 旋回命令
+        float forward; // 前後進命令
+        float turn =  0.0F; // 旋回命令
         if (sonarAlert) {           // 障害物を検知したら停止
             forward = 0.0F;
             StrategyMode.setLookupMode();
         } else {
-            forward = 30.0F;  // 前進命令
+            forward = 10.0F;  // 前進命令
             turn = body.getPIDTurnValue();
         }
 

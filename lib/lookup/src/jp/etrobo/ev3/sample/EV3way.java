@@ -39,6 +39,7 @@ public class EV3way {
     private static final float LIGHT_WHITE          = 0.4F;           // 白色のカラーセンサー輝度値
     private static final float LIGHT_BLACK          = 0.0F;           // 黒色のカラーセンサー輝度値
     private static final float P_GAIN               = 2.5F;           // 完全停止用モータ制御比例係数
+    private static final float P_SLOW_GAIN          = 0.5F;
     private static final int   PWM_ABS_MAX          = 60;             // 完全停止用モータ制御PWM絶対最大値
     private static final float THRESHOLD = (LIGHT_WHITE+LIGHT_BLACK)/2.0F;  // ライントレースの閾値
 
@@ -201,6 +202,21 @@ public class EV3way {
      */
     public void controlTail(int angle) {
         float pwm = (float)(angle - motorPortT.getTachoCount()) * P_GAIN; // 比例制御
+        // PWM出力飽和処理
+        if (pwm > PWM_ABS_MAX) {
+            pwm = PWM_ABS_MAX;
+        } else if (pwm < -PWM_ABS_MAX) {
+            pwm = -PWM_ABS_MAX;
+        }
+        motorPortT.controlMotor((int)pwm, 1);
+    }
+
+    /**
+     * ゆっくり制御用モータの角度制御
+     * @param angle モータ目標角度[度]
+     */
+    public void controlTailSlow(int angle) {
+        float pwm = (float)(angle - motorPortT.getTachoCount()) * P_SLOW_GAIN; // 比例制御
         // PWM出力飽和処理
         if (pwm > PWM_ABS_MAX) {
             pwm = PWM_ABS_MAX;
