@@ -113,10 +113,10 @@ public class EV3way {
 
     public void idling() {
         for (int i = 0; i < 1500; i++) {
-            motorPortL.controlMotor(0, 0);
-            getBrightness();
-            getSonarDistance();
-            getGyroValue();
+            this.motorPortL.controlMotor(0, 0);
+            this.getBrightness();
+            this.getSonarDistance();
+            this.getGyroValue();
             Battery.getVoltageMilliVolt();
             Balancer.control(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 8000);
         }
@@ -140,6 +140,17 @@ public class EV3way {
     public float getTouchValue() { return this.sampleTouch[0]; }
     public boolean isPressed() { return (int) this.getTouchValue() == 0; }
     
+    public void controllTail(int angle) {
+        float pwm = (float)(angle - motorPortT.getTachoCount()) * P_GAIN;
+        // PWM出力飽和処理
+        if (pwm > PWM_ABS_MAX) {
+            pwm = PWM_ABS_MAX;
+        } else if (pwm < -PWM_ABS_MAX) {
+            pwm = -PWM_ABS_MAX;
+        }
+        motorPortT.controlMotor((int)pwm, 1);
+    }
+
     public void ready() {
         this.gyro.reset();
         this.motorPortL.controlMotor(0, 0);

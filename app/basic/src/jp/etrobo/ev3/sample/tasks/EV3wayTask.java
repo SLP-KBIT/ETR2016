@@ -19,7 +19,6 @@ public class EV3wayTask implements Runnable {
      */
     public EV3wayTask(EV3way robot) {
         this.robot = robot;
-
     }
 
     /**
