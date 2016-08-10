@@ -7,6 +7,7 @@ package jp.etrobo.ev3.sample;
 
 import jp.etrobo.ev3.balancer.Balancer;
 import lejos.hardware.Battery;
+import lejos.hardware.lcd.LCD;
 import lejos.hardware.port.BasicMotorPort;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.Port;
@@ -36,11 +37,14 @@ public class EV3way {
     private static final Port  SENSORPORT_COLOR     = SensorPort.S3;  // カラーセンサーポート
     private static final Port  SENSORPORT_GYRO      = SensorPort.S4;  // ジャイロセンサーポート
     private static final float GYRO_OFFSET          = 0.0F;           // ジャイロセンサーオフセット値
-    private static final float LIGHT_WHITE          = 0.2F;           // 白色のカラーセンサー輝度値
+    private static final float LIGHT_WHITE          = 0.4F;           // 白色のカラーセンサー輝度値
     private static final float LIGHT_BLACK          = 0.0F;           // 黒色のカラーセンサー輝度値
-    private static final float SONAR_ALERT_DISTANCE = 0.3F;           // 超音波センサーによる障害物検知距離[m]
     private static final float P_GAIN               = 2.5F;           // 完全停止用モータ制御比例係数
+    private static final float P_SLOW_GAIN          = 0.5F;
+    private static final float P_GETUP_GAIN         = 4.5F;
+    private static final float P_HARD_GAIN          = 6.0F;
     private static final int   PWM_ABS_MAX          = 60;             // 完全停止用モータ制御PWM絶対最大値
+    private static final int   PWM_GETUP_MAX              = 80;       // 起き上がるときのPWM絶対最大値
     private static final float THRESHOLD = (LIGHT_WHITE+LIGHT_BLACK)/2.0F;  // ライントレースの閾値
 
     private static final float DELTA_T = 0.004F;
@@ -75,9 +79,6 @@ public class EV3way {
     private EV3GyroSensor gyro;
     private SampleProvider rate;          // 角速度検出モード
     private float[] sampleGyro;
-
-    private int         driveCallCounter = 0;
-    private boolean     sonarAlert   = false;
 
     /**
      * コンストラクタ。
@@ -134,7 +135,7 @@ public class EV3way {
      * センサー、モータ、倒立振子ライブラリのリセット。
      */
     public void reset() {
-        gyro.reset();
+        //gyro.reset();
         motorPortL.controlMotor(0, 0);
         motorPortR.controlMotor(0, 0);
         motorPortT.controlMotor(0, 0);
@@ -142,6 +143,21 @@ public class EV3way {
         motorPortR.resetTachoCount();   // 右モータエンコーダリセット
         motorPortT.resetTachoCount();   // 尻尾モータエンコーダリセット
         Balancer.init();                // 倒立振子制御初期化
+    }
+
+    /**
+     * ジャイロセンサーの初期化
+     */
+    public void resetGyro() {
+        gyro.reset();
+    }
+
+    /**
+     * 両サイドのモータエンコーダリセット
+     */
+    public void resetMotor(){
+        motorPortL.resetTachoCount();   // 左モータエンコーダリセット
+        motorPortR.resetTachoCount();   // 右モータエンコーダリセット
     }
 
     /**
@@ -165,50 +181,31 @@ public class EV3way {
     }
 
     /**
-     * 走行制御。
+     * PID制御でのターン値の取得
      */
-    public void controlDrive() {
-        if (++driveCallCounter >= 40/4) {  // 約40msごとに障害物検知
-            sonarAlert = alertObstacle();  // 障害物検知
-            driveCallCounter = 0;
-        }
-        float forward =  0.0F; // 前後進命令
-        float turn    =  0.0F; // 旋回命令
-        if (sonarAlert) {           // 障害物を検知したら停止
-            forward = 0.0F;
-            turn = 0.0F;
-        } else {
-            forward = 30.0F;  // 前進命令
+    public float getPIDTurnValue(){
+        float p, i, d;
+        float turn;
 
-            //-- ここからPID制御
-            float p, i, d;
+        sensor_val = getBrightness();
+        target_val = THRESHOLD;
 
-            sensor_val = getBrightness();
-            target_val = THRESHOLD;
+        diff[0] = diff[1];
+        diff[1] = sensor_val - target_val;
+        integral += (diff[1] + diff[0]) / 2.0 * DELTA_T;
 
-            diff[0] = diff[1];
-            diff[1] = sensor_val - target_val;
-            integral += (diff[1] + diff[0]) / 2.0 * DELTA_T;
+        p = Kp * diff[1];
+        i = Ki * integral;
+        d = Kd * (diff[1] + diff[0]) / DELTA_T;
+        turn = p + i + d;
 
-            p = Kp * diff[1];
-            i = Ki * integral;
-            d = Kd * (diff[1] + diff[0]) / DELTA_T;
-            turn = p + i + d;
-
-            if (turn > 100.0F) {
-            	turn = 100.0F;
-            } else if ( -100.0F > turn){
-            	turn = -100.0F;
-            }
+        if (turn > 100.0F) {
+        	turn = 100.0F;
+        } else if ( -100.0F > turn){
+        	turn = -100.0F;
         }
 
-        float gyroNow = getGyroValue();                 // ジャイロセンサー値
-        int thetaL = motorPortL.getTachoCount();        // 左モータ回転角度
-        int thetaR = motorPortR.getTachoCount();        // 右モータ回転角度
-        int battery = Battery.getVoltageMilliVolt();    // バッテリー電圧[mV]
-        Balancer.control (forward, turn, gyroNow, GYRO_OFFSET, thetaL, thetaR, battery); // 倒立振子制御
-        motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
-        motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
+    	return turn;
     }
 
     /**
@@ -227,27 +224,99 @@ public class EV3way {
     }
 
     /**
-     * 超音波センサーによる障害物検知
-     * @return true(障害物あり)/false(障害物無し)
+     * ゆっくり制御用モータの角度制御
+     * @param angle モータ目標角度[度]
      */
-    private boolean alertObstacle() {
-        float distance = getSonarDistance();
-        if ((distance <= SONAR_ALERT_DISTANCE) && (distance >= 0)) {
-            return true;  // 障害物を検知
+    public void controlTailSlow(int angle) {
+        float pwm = (float)(angle - motorPortT.getTachoCount()) * P_SLOW_GAIN; // 比例制御
+        // PWM出力飽和処理
+        if (pwm > PWM_ABS_MAX) {
+            pwm = PWM_ABS_MAX;
+        } else if (pwm < -PWM_ABS_MAX) {
+            pwm = -PWM_ABS_MAX;
         }
-        return false;
+        motorPortT.controlMotor((int)pwm, 1);
+    }
+
+    /**
+     * 尻尾状態を維持する用モータの角度制御
+     * @param angle モータ目標角度[度]
+     */
+    public void controlTailPropUP(int angle) {
+        float pwm = (float)(angle - motorPortT.getTachoCount()); // 比例制御
+        // 尻尾が目標値より高いか低いかで出力の比例定数を設定
+        if (0 < pwm) {
+        	pwm = pwm * P_HARD_GAIN;
+        } else if(pwm > 0) {
+        	pwm = pwm * P_GAIN ;
+        }
+
+        // PWM出力飽和処理
+        if (pwm > PWM_ABS_MAX) {
+            pwm = PWM_ABS_MAX;
+        } else if (pwm < -PWM_ABS_MAX) {
+            pwm = -PWM_ABS_MAX;
+        }
+        LCD.drawString("pwm:"+pwm, 0, 5);
+        motorPortT.controlMotor((int)pwm, 1);
+    }
+
+    /**
+     * 尻尾状態で起き上がる用モータの角度制御
+     * @param angle モータ目標角度[度]
+     */
+    public void controlTailGetUp(int angle) {
+        float pwm = (float)(angle - motorPortT.getTachoCount()); // 比例制御
+        // 尻尾が目標値より高いか低いかで出力の比例定数を設定
+        if (0 < pwm) {
+        	pwm = pwm * P_GETUP_GAIN ;
+        } else if(pwm > 0) {
+        	pwm = pwm * P_GAIN;
+        }
+
+        // PWM出力飽和処理
+        if (pwm > PWM_GETUP_MAX ) {
+            pwm = PWM_GETUP_MAX ;
+        } else if (pwm < -PWM_GETUP_MAX ) {
+            pwm = -PWM_GETUP_MAX ;
+        }
+        motorPortT.controlMotor((int)pwm, 1);
+    }
+
+    /**
+     * クラス外からバランサーAPIの設定
+     *
+     */
+    public void setBalancerParm(float forward, float turn){
+        float gyroNow = getGyroValue();                 // ジャイロセンサー値
+        int thetaL = motorPortL.getTachoCount();        // 左モータ回転角度
+        int thetaR = motorPortR.getTachoCount();        // 右モータ回転角度
+        int battery = Battery.getVoltageMilliVolt();    // バッテリー電圧[mV]
+        Balancer.control (forward, turn, gyroNow, GYRO_OFFSET, thetaL, thetaR, battery); // 倒立振子制御
+    }
+
+    /**
+     * クラス外からバランサーAPIの設定
+     *
+     */
+    public void setBalancerParm(float forward, float turn, float gyroOffset){
+        float gyroNow = getGyroValue();                 // ジャイロセンサー値
+        int thetaL = motorPortL.getTachoCount();        // 左モータ回転角度
+        int thetaR = motorPortR.getTachoCount();        // 右モータ回転角度
+        int battery = Battery.getVoltageMilliVolt();    // バッテリー電圧[mV]
+        Balancer.control (forward, turn, gyroNow, gyroOffset, thetaL, thetaR, battery); // 倒立振子制御
     }
 
     /**
      * 超音波センサーにより障害物との距離を取得する。
      * @return 障害物との距離(m)。
      */
-    private final float getSonarDistance() {
+    public final float getSonarDistance() {
         distanceMode.fetchSample(sampleDistance, 0);
         return sampleDistance[0];
     }
 
-    /**
+    /*
      * カラーセンサーから輝度値を取得する。
      * @return 輝度値。
      */
@@ -260,7 +329,7 @@ public class EV3way {
      * ジャイロセンサーから角速度を取得する。
      * @return 角速度。
      */
-    private final float getGyroValue() {
+    public final float getGyroValue() {
         rate.fetchSample(sampleGyro, 0);
         // leJOS ではジャイロセンサーの角速度値が正負逆になっているので、
         // 倒立振子ライブラリの仕様に合わせる。
