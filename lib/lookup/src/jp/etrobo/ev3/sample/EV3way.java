@@ -7,6 +7,7 @@ package jp.etrobo.ev3.sample;
 
 import jp.etrobo.ev3.balancer.Balancer;
 import lejos.hardware.Battery;
+import lejos.hardware.lcd.LCD;
 import lejos.hardware.port.BasicMotorPort;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.Port;
@@ -40,8 +41,10 @@ public class EV3way {
     private static final float LIGHT_BLACK          = 0.0F;           // 黒色のカラーセンサー輝度値
     private static final float P_GAIN               = 2.5F;           // 完全停止用モータ制御比例係数
     private static final float P_SLOW_GAIN          = 0.5F;
+    private static final float P_GETUP_GAIN         = 4.5F;
     private static final float P_HARD_GAIN          = 6.0F;
     private static final int   PWM_ABS_MAX          = 60;             // 完全停止用モータ制御PWM絶対最大値
+    private static final int   PWM_GETUP_MAX              = 80;       // 起き上がるときのPWM絶対最大値
     private static final float THRESHOLD = (LIGHT_WHITE+LIGHT_BLACK)/2.0F;  // ライントレースの閾値
 
     private static final float DELTA_T = 0.004F;
@@ -150,6 +153,14 @@ public class EV3way {
     }
 
     /**
+     * 両サイドのモータエンコーダリセット
+     */
+    public void resetMotor(){
+        motorPortL.resetTachoCount();   // 左モータエンコーダリセット
+        motorPortR.resetTachoCount();   // 右モータエンコーダリセット
+    }
+
+    /**
      * センサー、モータの終了処理。
      */
     public void close() {
@@ -231,7 +242,7 @@ public class EV3way {
      * 尻尾状態を維持する用モータの角度制御
      * @param angle モータ目標角度[度]
      */
-    public void controlTailSupport(int angle) {
+    public void controlTailPropUP(int angle) {
         float pwm = (float)(angle - motorPortT.getTachoCount()); // 比例制御
         // 尻尾が目標値より高いか低いかで出力の比例定数を設定
         if (0 < pwm) {
@@ -245,6 +256,29 @@ public class EV3way {
             pwm = PWM_ABS_MAX;
         } else if (pwm < -PWM_ABS_MAX) {
             pwm = -PWM_ABS_MAX;
+        }
+        LCD.drawString("pwm:"+pwm, 0, 5);
+        motorPortT.controlMotor((int)pwm, 1);
+    }
+
+    /**
+     * 尻尾状態で起き上がる用モータの角度制御
+     * @param angle モータ目標角度[度]
+     */
+    public void controlTailGetUp(int angle) {
+        float pwm = (float)(angle - motorPortT.getTachoCount()); // 比例制御
+        // 尻尾が目標値より高いか低いかで出力の比例定数を設定
+        if (0 < pwm) {
+        	pwm = pwm * P_GETUP_GAIN ;
+        } else if(pwm > 0) {
+        	pwm = pwm * P_GAIN;
+        }
+
+        // PWM出力飽和処理
+        if (pwm > PWM_GETUP_MAX ) {
+            pwm = PWM_GETUP_MAX ;
+        } else if (pwm < -PWM_GETUP_MAX ) {
+            pwm = -PWM_GETUP_MAX ;
         }
         motorPortT.controlMotor((int)pwm, 1);
     }
@@ -291,11 +325,11 @@ public class EV3way {
         return sampleLight[0];
     }
 
-    /*
+    /**
      * ジャイロセンサーから角速度を取得する。
      * @return 角速度。
      */
-    private final float getGyroValue() {
+    public final float getGyroValue() {
         rate.fetchSample(sampleGyro, 0);
         // leJOS ではジャイロセンサーの角速度値が正負逆になっているので、
         // 倒立振子ライブラリの仕様に合わせる。

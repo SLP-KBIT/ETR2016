@@ -29,10 +29,9 @@ public class DriveMode implements Mode {
             forward = 0.0F;
             StrategyMode.setLookupMode();
         } else {
-            forward = 10.0F;  // 前進命令
+            forward = 20.0F;  // 前進命令
             turn = body.getPIDTurnValue();
         }
-
         body.setBalancerParm(forward, turn);
         body.motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
         body.motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
