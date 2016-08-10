@@ -15,4 +15,8 @@ public abstract class BaseStrategy {
     }
     
     public abstract State execute();
+    
+    public State getState() {
+        return this.state;
+    }
 }

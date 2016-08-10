@@ -48,6 +48,15 @@ public class SensorStore {
         this.resetGyro();
     }
 
+    public void idling() {
+        this.updateSensorValues();
+    }
+    
+    public void close() {
+        this.colorSensor.setFloodlight(false);
+        this.sonar.disable();
+    }
+    
     /*
      * SensorStore の field のセンサー値を更新します
      * 4ms 毎に毎回この関数を飛び出してください
@@ -64,14 +73,14 @@ public class SensorStore {
     public float getColorValue() { return this.sampleLight[0]; }
     public float getTouchValue() { return this.sampleTouch[0]; }
     public float getDistanceValue() { return this.sampleDistance[0]; }
-    public boolean isPressed() { return (int)this.sampleTouch[0] == 0; }
+    public boolean isPressed() { return (int)this.sampleTouch[0] == 1; }
 
     
     // private methods {{{
     private void __initalizeTouchSensor() {
         this.touch = new EV3TouchSensor(SENSORPORT_TOUCH);
         this.touchMode = this.touch.getTouchMode();
-        this.sampleDistance = new float[this.touchMode.sampleSize()];
+        this.sampleTouch = new float[this.touchMode.sampleSize()];
     }
     private void __initalizeSonicSensor() {
         this.sonar = new EV3UltrasonicSensor(SENSORPORT_SONAR);

@@ -2,7 +2,8 @@ package jp.etrobo.ev3.framework.strategy;
 
 public enum State {
     NOT_SELECTED, // 選択されていない
-    WAIT_TRIGGER, // 障害物検知待ち
+    READY,        // 待機中
+    BASIC,        // 標準ライントレース中（BasicStrategy専用)
     SINGLE,       // シングル 攻略中
     DOUBLE,       // ダブル  攻略中
     CLEAR,        // クリア
