@@ -1,16 +1,16 @@
 package jp.etrobo.ev3.framework.strategy;
 
-import jp.etrobo.ev3.framework.motor.MotorStore;
-import jp.etrobo.ev3.framework.sensor.SensorStore;
+import jp.etrobo.ev3.framework.motor.MotorController;
+import jp.etrobo.ev3.framework.sensor.SensorController;
 
 public class StrategySelector {
-    private SensorStore sensors;
-    private MotorStore motors;
+    private SensorController sensors;
+    private MotorController motors;
     private ReadyStrategy readyStrategy;
     private ExceptionStrategy exceptionStrategy;
     private BasicStrategy basicStrategy;
     
-    public StrategySelector(MotorStore motors, SensorStore sensors) {
+    public StrategySelector(MotorController motors, SensorController sensors) {
         this.sensors = sensors;
         this.motors = motors;
         this.readyStrategy = new ReadyStrategy(motors, sensors);
@@ -26,7 +26,7 @@ public class StrategySelector {
         }
         return this.exceptionStrategy;
     }
-    
+
     private boolean isClear(BaseStrategy strategy) {
         return strategy.getState() == State.CLEAR;
     }

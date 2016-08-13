@@ -2,8 +2,8 @@ package jp.etrobo.ev3.framework.strategy;
 
 import jp.etrobo.ev3.balancer.Balancer;
 import jp.etrobo.ev3.framework.calculator.Calculator;
-import jp.etrobo.ev3.framework.motor.MotorStore;
-import jp.etrobo.ev3.framework.sensor.SensorStore;
+import jp.etrobo.ev3.framework.motor.MotorController;
+import jp.etrobo.ev3.framework.sensor.SensorController;
 import lejos.hardware.Battery;
 import lejos.hardware.lcd.LCD;
 
@@ -13,7 +13,7 @@ public class BasicStrategy extends BaseStrategy {
     private int timeCounter = 0;
     private Calculator calucrator;
    
-    public BasicStrategy(MotorStore motors, SensorStore sensors) {
+    public BasicStrategy(MotorController motors, SensorController sensors) {
         super(motors, sensors);
         this.calucrator = new Calculator();
         this.state = State.NOT_SELECTED;
@@ -30,7 +30,7 @@ public class BasicStrategy extends BaseStrategy {
             this.ready();
             break;
         case BASIC:
-            this.motors.controlTail(0);
+            // this.motors.controlTail(0);
             this.linetrace();
             break;
         default:
@@ -49,6 +49,7 @@ public class BasicStrategy extends BaseStrategy {
         this.motors.controlTail(83);
         this.motors.motorPortL.controlMotor((int)forward, 1); // 左モータPWM出力セット
         this.motors.motorPortR.controlMotor((int)forward, 1); // 右モータPWM出力セット
+        // TODO:
         // float forward = 30.0F;
         // float gyro = this.sensors.getGyloValue();
         // float color = this.sensors.getColorValue();

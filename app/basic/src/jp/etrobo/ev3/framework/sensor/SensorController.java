@@ -9,7 +9,7 @@ import lejos.hardware.sensor.EV3UltrasonicSensor;
 import lejos.hardware.sensor.SensorMode;
 import lejos.robotics.SampleProvider;
 
-public class SensorStore {
+public class SensorController {
     // private fields {{{
     // ports {{{
     private static final Port SENSORPORT_TOUCH = SensorPort.S1; // タッチセンサーポート
@@ -40,7 +40,7 @@ public class SensorStore {
     // }}}
     // }}}
     
-    public SensorStore() {
+    public SensorController() {
         this.__initalizeColorSensor();
         this.__initalizeGyroSensor();
         this.__initalizeSonicSensor();

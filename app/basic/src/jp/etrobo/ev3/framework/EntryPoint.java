@@ -28,6 +28,11 @@ public class EntryPoint {
         this.futureRemote = this.schedule.scheduleAtFixedRate(this.remoteTask, 0, 100, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * close()
+     * @return void
+     * スケジューリングしているタスクを終了し，各デバイスのファイナライズを行います
+     */
     public void close() {
         this.futureDrive.cancel(true);
         this.driver.close();
@@ -36,10 +41,15 @@ public class EntryPoint {
         this.schedule.shutdownNow();
     }
     
+    /**
+     * driveStart()
+     * @return void
+     * 走行タスクのスケジューリングを行い，走行を開始します
+     */
     private void driveStart() {
         futureDrive = schedule.scheduleAtFixedRate(driver, 0, 4, TimeUnit.MILLISECONDS);
     }
-
+    
     public static void main(String[] args) {
         LCD.drawString("Please Wait...  ", 0, 4);
         EntryPoint program = new EntryPoint();

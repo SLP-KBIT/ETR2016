@@ -6,7 +6,7 @@ import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.Port;
 import lejos.hardware.port.TachoMotorPort;
 
-public class MotorStore {
+public class MotorController {
     private static final Port  MOTORPORT_LWHEEL = MotorPort.C; // 左モータポート
     private static final Port  MOTORPORT_RWHEEL = MotorPort.B; // 右モータポート
     private static final Port  MOTORPORT_TAIL   = MotorPort.A; // 尻尾モータポート
@@ -18,7 +18,7 @@ public class MotorStore {
     public TachoMotorPort motorPortR; // 右モータ
     public TachoMotorPort motorPortT; // 尻尾モータ
     
-    public MotorStore() {
+    public MotorController() {
         this.__initalizeAllMotor();
     }
    

@@ -1,11 +1,11 @@
 package jp.etrobo.ev3.framework.strategy;
 
-import jp.etrobo.ev3.framework.motor.MotorStore;
-import jp.etrobo.ev3.framework.sensor.SensorStore;
+import jp.etrobo.ev3.framework.motor.MotorController;
+import jp.etrobo.ev3.framework.sensor.SensorController;
 import lejos.hardware.lcd.LCD;
 
 public class ExceptionStrategy extends BaseStrategy {
-    public ExceptionStrategy(MotorStore motors, SensorStore sensors) {
+    public ExceptionStrategy(MotorController motors, SensorController sensors) {
         super(motors, sensors);
     }
 

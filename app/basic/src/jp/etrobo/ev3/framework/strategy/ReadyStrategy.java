@@ -1,13 +1,13 @@
 package jp.etrobo.ev3.framework.strategy;
 
-import jp.etrobo.ev3.framework.motor.MotorStore;
-import jp.etrobo.ev3.framework.sensor.SensorStore;
+import jp.etrobo.ev3.framework.motor.MotorController;
+import jp.etrobo.ev3.framework.sensor.SensorController;
 import lejos.hardware.lcd.LCD;
 
 public class ReadyStrategy extends BaseStrategy {
     private static final int STAND_UP_TAIL_ANGLE = 83;
     
-    public ReadyStrategy(MotorStore motors, SensorStore sensors) {
+    public ReadyStrategy(MotorController motors, SensorController sensors) {
         super(motors, sensors);
     }
 

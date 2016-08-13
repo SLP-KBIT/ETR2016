@@ -18,7 +18,7 @@ public class RemoteTask implements Runnable {
     public static final int   REMOTE_COMMAND_START = 71;   // 'g'
     public static final int   REMOTE_COMMAND_STOP  = 83;   // 's'
 
-    private static final int   SOCKET_PORT          = 7360; // PCと接続するポート
+    private static final int  SOCKET_PORT          = 7360; // PCと接続するポート
 
     private ServerSocket    server;
     private Socket          client;
