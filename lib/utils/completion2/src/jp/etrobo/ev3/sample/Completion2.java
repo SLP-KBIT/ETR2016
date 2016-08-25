@@ -5,20 +5,18 @@
  */
 package jp.etrobo.ev3.sample;
 
-import java.math.BigDecimal;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import lejos.hardware.Button;
 import lejos.hardware.lcd.LCD;
 import lejos.utility.Delay;
 
 /**
  * 2輪倒立振子ライントレースロボットの leJOS EV3 用 Java サンプルプログラム。
  */
-public class EV3waySample {
+public class Completion2 {
     private EV3way         body;            // EV3 本体
     private boolean        touchPressed;    // タッチセンサーが押されたかの状態
 
@@ -31,25 +29,11 @@ public class EV3waySample {
     private EV3wayTask  driveTask;   // 走行制御
     private RemoteTask  remoteTask;  // リモート制御
 
-    // パラメータセッティング用
-	private int parmSelect = 0;
-	private BigDecimal p = new BigDecimal("0.36");
-	private BigDecimal i = new BigDecimal("1.2");
-	private BigDecimal d = new BigDecimal("0.027");
-
-	//private BigDecimal p = new BigDecimal("0.36");
-	//private BigDecimal i = new BigDecimal("0.004");
-	//private BigDecimal d = new BigDecimal("0.03");
-
-	private BigDecimal forward = new BigDecimal("30.0");
-	private BigDecimal fixPIDValue = new BigDecimal("0.001");
-	private BigDecimal fixForwardValue = new BigDecimal("5.0");
-
     /**
      * コンストラクタ。
      * スケジューラとタスクオブジェクトを作成。
      */
-    public EV3waySample() {
+    public Completion2() {
         body = new EV3way();
         body.idling();
         body.reset();
@@ -131,94 +115,19 @@ public class EV3waySample {
     }
 
     /**
-     * パラメータをボタンで設定
-     */
-    public void parmSetting() {
-		if(Button.UP.isDown()){
-			parmSelect--;
-			if(parmSelect < 0) {
-				parmSelect = 0;
-			}
-		}
-		if(Button.DOWN.isDown()){
-			parmSelect++;
-			if(parmSelect > 3) {
-				parmSelect = 3;
-			}
-		}
-		if(Button.RIGHT.isDown()){
-	    	switch (parmSelect) {
-	    		case 0:
-	    			p = p.add(fixPIDValue);
-	    			break;
-	    		case 1:
-	    			i = i.add(fixPIDValue);
-	    			break;
-	    		case 2:
-	    			d = d.add(fixPIDValue);
-	    			break;
-	    		case 3:
-	    			forward = forward.add(fixForwardValue);
-	    			break;
-	    	}
-		}
-		if(Button.LEFT.isDown()){
-	    	switch (parmSelect) {
-	    		case 0:
-	    			p = p.subtract(fixPIDValue);
-	    			break;
-	    		case 1:
-	    			i = i.subtract(fixPIDValue);
-	    			break;
-	    		case 2:
-	    			d = d.subtract(fixPIDValue);
-	    			break;
-	    		case 3:
-	    			forward = forward.subtract(fixForwardValue);
-	    			break;
-	    	}
-		}
-		LCD.clear();
-		LCD.drawString("P:" + p, 0, 0);
-		LCD.drawString("I:" + i, 0, 1);
-		LCD.drawString("D:" + d, 0, 2);
-		LCD.drawString("forward:" + forward, 0, 3);
-		LCD.drawString("select:" + parmSelect, 0, 5);
-		LCD.refresh();
-    }
-
-    /**
-     * PIDのパラメータを登録
-     */
-    private void setPIDParm(){
-    	float Kp = p.floatValue(), Ki = i.floatValue(), Kd = d.floatValue();
-    	body.setPIDParm(Kp, Ki, Kd);
-    }
-
-    /**
-     * フォワード値のパラメータを登録
-     */
-	private void setForwardParm() {
-		float baseForward = forward.floatValue();
-		body.setForwardParm(baseForward);
-	}
-
     /**
      * メイン
      */
     public static void main(String[] args) {
     	LCD.drawString("Please Wait...  ", 0, 4);
-		EV3waySample program = new EV3waySample();
+		Completion2 program = new Completion2();
 
     	// スタート待ち
     	LCD.drawString("Touch to START", 0, 4);
 
     	while (program.waitForStart()) {
-    		program.parmSetting();
     		Delay.msDelay(100);
     	}
-    	program.setPIDParm();
-    	program.setForwardParm();
     	LCD.clear();
 
     	LCD.drawString("Running       ", 0, 4);

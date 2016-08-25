@@ -44,13 +44,15 @@ public class EV3way {
     private static final float THRESHOLD = (LIGHT_WHITE+LIGHT_BLACK)/2.0F;  // ライントレースの閾値
 
     private static final float DELTA_T = 0.004F;
-    private static float Kp = 0.0F, Ki = 0.0F, Kd = 0.0F;
-    //private static float Kp = 0.36F, Ki = 0.5F, Kd = 0.5F;
-    private static float baseForward = 0.0F;
+    private static final float TURN_MAX = 100.0F;
+
+    private static float Kp = 0.36F, Ki = 1.2F, Kd = 0.027F;
+    private static float baseForward = 30.0F;
     private static float sensor_val;
     private static float target_val;
     private static float[] diff = new float[2];
     private static float integral;
+
 
     // モータ制御用オブジェクト
     // EV3LargeRegulatedMotor では PWM 制御ができないので、TachoMotorPort を利用する
@@ -195,21 +197,13 @@ public class EV3way {
             p = Kp * diff[1];
             i = Ki * integral;
             d = Kd * (diff[1] - diff[0]) / DELTA_T;
-            turn = p + i + d;
+            turn = TURN_MAX * (p + i + d);
 
-            if (turn > 100.0F) {
-            	turn = 100.0F;
-            } else if ( -100.0F > turn){
-            	turn = -100.0F;
+            if (turn > TURN_MAX) {
+            	turn = TURN_MAX;
+            } else if ( -TURN_MAX > turn){
+            	turn = -TURN_MAX;
             }
-/*
-            // デバッグ用  表示しながら走ると倒れる
-    		LCD.drawString("P:" + Kp, 0, 0);
-    		LCD.drawString("I:" + Ki, 0, 1);
-    		LCD.drawString("D:" + Kd, 0, 2);
-    		LCD.drawString("forward:" + forward, 0, 3);
-    		LCD.drawString("turn:" + turn, 0, 4);
-*/
         }
 
         float gyroNow = getGyroValue();                 // ジャイロセンサー値
@@ -219,26 +213,6 @@ public class EV3way {
         Balancer.control (forward, turn, gyroNow, GYRO_OFFSET, thetaL, thetaR, battery); // 倒立振子制御
         motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
         motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
-        //motorPortL.controlMotor(0, 1); // 左モータPWM出力セット
-        //motorPortR.controlMotor(0, 1); // 右モータPWM出力セット
-    }
-
-    /**
-     * PIDのパラメータをセット
-     *
-     */
-    public void setPIDParm(float p, float i, float d){
-    	Kp = p;
-    	Ki = i;
-    	Kd = d;
-    }
-
-    /**
-     * フォワード値のパラメータをセット
-     *
-     */
-    public void setForwardParm(float f){
-    	baseForward = f;
     }
 
     /**
