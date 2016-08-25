@@ -33,16 +33,13 @@ public class EV3waySample {
 
     // パラメータセッティング用
 	private int parmSelect = 0;
-	private BigDecimal p = new BigDecimal("0.36");
-	private BigDecimal i = new BigDecimal("1.2");
-	private BigDecimal d = new BigDecimal("0.027");
 
-	//private BigDecimal p = new BigDecimal("0.36");
-	//private BigDecimal i = new BigDecimal("0.004");
-	//private BigDecimal d = new BigDecimal("0.03");
+	private BigDecimal p = new BigDecimal("0.36");
+	private BigDecimal i = new BigDecimal("0.004");
+	private BigDecimal d = new BigDecimal("0.03");
 
 	private BigDecimal forward = new BigDecimal("30.0");
-	private BigDecimal fixPIDValue = new BigDecimal("0.001");
+	private BigDecimal fixPIDValue = new BigDecimal("0.01");
 	private BigDecimal fixForwardValue = new BigDecimal("5.0");
 
     /**
