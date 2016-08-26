@@ -39,15 +39,13 @@ public class EV3way {
     private static final float SONAR_ALERT_DISTANCE = 0.3F;           // 超音波センサーによる障害物検知距離[m]
     private static final float P_GAIN               = 2.5F;           // 完全停止用モータ制御比例係数
     private static final int   PWM_ABS_MAX          = 60;             // 完全停止用モータ制御PWM絶対最大値
-    //private static final float THRESHOLD = (LIGHT_WHITE+LIGHT_BLACK)/2.0F; // ライントレースの閾値
-    private static final float THRESHOLD = 0.30F;  // ライントレースの閾値
+    private static final float THRESHOLD = 0.30F;  // ライントレースの目標値
 
     private static final float DELTA_T = 0.004F;
     private static final float TURN_MAX = 100.0F;
 
-    //private static float Kp = 0.36F, Ki = 1.2F, Kd = 0.027F;  // 目標値が20.0Fのとき
-    private static float Kp = 1.0F, Ki = 1.2F, Kd = 0.027F;
-    private static float Kp2 = 3.0F;
+    //private static float Kp = 1.0F, Ki = 1.2F, Kd = 0.027F;
+    private static float Kp1 = 1.0F, Kp2 = 3.0F;
     private static float baseForward = 60.0F;
     private static float sensor_val;
     private static float target_val;
@@ -186,7 +184,8 @@ public class EV3way {
             forward = baseForward;  // 前進命令
 
             //-- ここからPID制御
-            float p, i, d;
+            //float p, i, d;
+            float p;
 
             sensor_val = getBrightness();
             target_val = THRESHOLD;
@@ -196,12 +195,12 @@ public class EV3way {
             //integral += (diff[1] + diff[0]) / 2.0 * DELTA_T;
 
             if ( 0 < diff[1] ) {
-            	p = Kp * diff[1];
+            	p = Kp1 * diff[1];
             } else {
             	p = Kp2 * diff[1];
             }
-            i = Ki * integral;
-            d = Kd * (diff[1] - diff[0]) / DELTA_T;
+            //i = Ki * integral;
+            //sd = Kd * (diff[1] - diff[0]) / DELTA_T;
             turn = TURN_MAX * p;
             turn = turn * -1;  // 右エッジ
 

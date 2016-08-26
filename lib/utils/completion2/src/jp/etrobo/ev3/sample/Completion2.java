@@ -52,9 +52,8 @@ public class Completion2 {
         futureRemote = scheduler.scheduleAtFixedRate(remoteTask, 0, 100, TimeUnit.MILLISECONDS);
 
         call = new Thread(() -> {
-    		Sound.playTone(400,300);
-    		Sound.playTone(450,300);
-    		Sound.playTone(800,300);
+    		Sound.playTone(400,150);
+    		Sound.playTone(450,150);
     	});
     }
 
