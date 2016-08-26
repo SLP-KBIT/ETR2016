@@ -7,6 +7,7 @@ package jp.etrobo.ev3.sample;
 
 import jp.etrobo.ev3.balancer.Balancer;
 import lejos.hardware.Battery;
+import lejos.hardware.Sound;
 import lejos.hardware.port.BasicMotorPort;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.Port;
@@ -41,7 +42,7 @@ public class EV3way {
     private static final int   PWM_ABS_MAX          = 60;             // 完全停止用モータ制御PWM絶対最大値
     private static final float THRESHOLD = 0.30F;  // ライントレースの目標値
 
-    private static final float DELTA_T = 0.004F;
+    //private static final float DELTA_T = 0.004F;
     private static final float TURN_MAX = 100.0F;
 
     //private static float Kp = 1.0F, Ki = 1.2F, Kd = 0.027F;
@@ -51,7 +52,6 @@ public class EV3way {
     private static float target_val;
     private static float[] diff = new float[2];
     private static float integral;
-
 
     // モータ制御用オブジェクト
     // EV3LargeRegulatedMotor では PWM 制御ができないので、TachoMotorPort を利用する
@@ -81,6 +81,17 @@ public class EV3way {
 
     private int         driveCallCounter = 0;
     private boolean     sonarAlert   = false;
+
+    // 非同期メソッド
+    private Thread call1, call2;
+
+    // 距離
+    private final int CALL_DISTANCE1 = 1000;
+    private final int CALL_DISTANCE2 = 2000;
+
+    // 距離測定用のフラグ
+    private Boolean callFlag1 = true;
+    private Boolean callFlag2 = true;
 
     /**
      * コンストラクタ。
@@ -113,6 +124,15 @@ public class EV3way {
         gyro = new EV3GyroSensor(SENSORPORT_GYRO);
         rate = gyro.getRateMode();              // 角速度検出モード
         sampleGyro = new float[rate.sampleSize()];
+
+        // スピーカー
+        call1 = new Thread(() -> {
+    		Sound.playTone(400,150);
+    		Sound.playTone(450,150);
+    	});
+        call2 = new Thread(() -> {
+    		Sound.playTone(400,300);
+    	});
     }
 
     /**
@@ -218,6 +238,19 @@ public class EV3way {
         Balancer.control (forward, turn, gyroNow, GYRO_OFFSET, thetaL, thetaR, battery); // 倒立振子制御
         motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
         motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
+
+
+        // 距離測定
+        if(motorPortR.getTachoCount() > CALL_DISTANCE1 && callFlag1) {
+        	call1.start();
+        	callFlag1 = false;
+        }
+
+        if(motorPortR.getTachoCount() > CALL_DISTANCE2 && callFlag2) {
+        	call2.start();
+        	callFlag2 = false;
+        }
+
     }
 
     /**
