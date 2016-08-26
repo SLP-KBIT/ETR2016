@@ -203,6 +203,7 @@ public class EV3way {
             i = Ki * integral;
             d = Kd * (diff[1] - diff[0]) / DELTA_T;
             turn = TURN_MAX * p;
+            turn = turn * -1;  // 右エッジ
 
             if (turn > TURN_MAX) {
             	turn = TURN_MAX;
