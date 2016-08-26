@@ -93,7 +93,7 @@ public class Completion2 {
      */
     public boolean waitForStart() {
         boolean res = true;
-        body.controlTail(EV3way.TAIL_ANGLE_STAND_UP);
+        body.controlTail(standTailAngle);
         if (body.touchSensorIsPressed()) {
             touchPressed = true;          // タッチセンサーが押された
         } else {

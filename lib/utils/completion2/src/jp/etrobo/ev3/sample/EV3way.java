@@ -36,18 +36,19 @@ public class EV3way {
     private static final Port  SENSORPORT_COLOR     = SensorPort.S3;  // カラーセンサーポート
     private static final Port  SENSORPORT_GYRO      = SensorPort.S4;  // ジャイロセンサーポート
     private static final float GYRO_OFFSET          = 0.0F;           // ジャイロセンサーオフセット値
-    private static final float LIGHT_WHITE          = 0.2F;           // 白色のカラーセンサー輝度値
-    private static final float LIGHT_BLACK          = 0.0F;           // 黒色のカラーセンサー輝度値
     private static final float SONAR_ALERT_DISTANCE = 0.3F;           // 超音波センサーによる障害物検知距離[m]
     private static final float P_GAIN               = 2.5F;           // 完全停止用モータ制御比例係数
     private static final int   PWM_ABS_MAX          = 60;             // 完全停止用モータ制御PWM絶対最大値
-    private static final float THRESHOLD = (LIGHT_WHITE+LIGHT_BLACK)/2.0F;  // ライントレースの閾値
+    //private static final float THRESHOLD = (LIGHT_WHITE+LIGHT_BLACK)/2.0F; // ライントレースの閾値
+    private static final float THRESHOLD = 0.30F;  // ライントレースの閾値
 
     private static final float DELTA_T = 0.004F;
     private static final float TURN_MAX = 100.0F;
 
-    private static float Kp = 0.36F, Ki = 1.2F, Kd = 0.027F;
-    private static float baseForward = 30.0F;
+    //private static float Kp = 0.36F, Ki = 1.2F, Kd = 0.027F;  // 目標値が20.0Fのとき
+    private static float Kp = 1.0F, Ki = 1.2F, Kd = 0.027F;
+    private static float Kp2 = 3.0F;
+    private static float baseForward = 60.0F;
     private static float sensor_val;
     private static float target_val;
     private static float[] diff = new float[2];
@@ -190,14 +191,18 @@ public class EV3way {
             sensor_val = getBrightness();
             target_val = THRESHOLD;
 
-            diff[0] = diff[1];
+            //diff[0] = diff[1];
             diff[1] = sensor_val - target_val;
-            integral += (diff[1] + diff[0]) / 2.0 * DELTA_T;
+            //integral += (diff[1] + diff[0]) / 2.0 * DELTA_T;
 
-            p = Kp * diff[1];
+            if ( 0 < diff[1] ) {
+            	p = Kp * diff[1];
+            } else {
+            	p = Kp2 * diff[1];
+            }
             i = Ki * integral;
             d = Kd * (diff[1] - diff[0]) / DELTA_T;
-            turn = TURN_MAX * (p + i + d);
+            turn = TURN_MAX * p;
 
             if (turn > TURN_MAX) {
             	turn = TURN_MAX;
