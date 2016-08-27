@@ -1,0 +1,102 @@
+@startuml
+
+class EntryPoint {
+  -driveStart() : void
+  -close() : void
+}
+
+class Driver {
+  +idling() : void
+  +stop() : void
+  +run() : void
+}
+
+class RemoteTask {
+  -server : ServerSocket
+  -client : Socket
+  -disconnect() : void
+  -connect() : void
+  +run() : void
+}
+
+interface Runnable {
+  +{abstract}run()
+}
+
+Driver <|.. Runnable : Implements
+RemoteTask <|.. Runnable : Implements
+
+EntryPoint ..> Driver : Dependent
+EntryPoint ..> RemoteTask : Dependent
+
+abstract BaseStrategy {
+  +{abstract} execute() : State
+  +getState() : State
+}
+
+class LookUpStrategy {
+  +execute() : State
+  -transform() : void
+}
+
+class StrategySelector {
+  +strategies : Collection<BaseStrategy>
+  +select() : BaseStrategy
+  +isClear(BaseStrategy currentStrategy) : boolean
+}
+
+enum State {
+  +NOT_SELECTED
+  +READY
+  +BASIC
+  +SINGLE
+  +DOUBLE
+  +CLEAR
+  +FAIL
+  +EXCEPTION
+}
+
+Driver --> StrategySelector : Use
+BaseStrategy --> State : Have one
+StrategySelector --> BaseStrategy : Has meny
+LookUpStrategy --|> BaseStrategy : Extends
+
+
+class MotorController {
+  -rightMotor : EV3Motor
+  -leftMotor : EV3Motor
+  -tailMotor : EV3Motor
+  +controlTail(int angle) : void
+  +close() : void
+  +reset() : void
+}
+
+class SensorController {
+  -touchSensor : EV3Sensor
+  -colorSensor : EV3Sensor
+  -gyroSensor : EV3Sensor
+  -sonarSensor : EV3Sensor
+  +updateSensorValues() : void
+  +getGyloValue() : float
+  +getColorValue() : float
+  +getTouchValue() : float
+  +getDistanceValue() : float
+
+}
+
+class Calclator {
+  +pidCalcate(current: float, target: float) : float
+}
+
+BaseStrategy --> Calclator : Has meny
+
+package lejosEV3 {
+  EV3Motor <-- MotorController : Has meny
+  EV3Sensor <-- SensorController : Has meny
+}
+
+BaseStrategy --> MotorController : Have one
+BaseStrategy --> SensorController : Have one
+
+@enduml
+
