@@ -44,6 +44,8 @@ public class EV3way {
     private static final float THRESHOLD = (LIGHT_WHITE+LIGHT_BLACK)/2.0F;  // ライントレースの閾値
 
     private static final float DELTA_T = 0.004F;
+    private static final float TURN_MAX = 100.0F;
+
     private static float Kp = 0.0F, Ki = 0.0F, Kd = 0.0F;
     //private static float Kp = 0.36F, Ki = 0.5F, Kd = 0.5F;
     private static float baseForward = 0.0F;
@@ -195,12 +197,12 @@ public class EV3way {
             p = Kp * diff[1];
             i = Ki * integral;
             d = Kd * (diff[1] - diff[0]) / DELTA_T;
-            turn = p + i + d;
+            turn = TURN_MAX * (p + i + d);
 
-            if (turn > 100.0F) {
-            	turn = 100.0F;
-            } else if ( -100.0F > turn){
-            	turn = -100.0F;
+            if (turn > TURN_MAX) {
+            	turn = TURN_MAX;
+            } else if ( -TURN_MAX > turn){
+            	turn = -TURN_MAX;
             }
 /*
             // デバッグ用  表示しながら走ると倒れる
