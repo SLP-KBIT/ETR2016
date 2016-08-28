@@ -23,6 +23,8 @@ public class Completion2 {
     private boolean        touchPressed;    // タッチセンサーが押されたかの状態
     private int standTailAngle;             // 倒立状態の尻尾の角度
 
+    private static final float STOP_GYRO         = 400.0F;
+
     // スケジューラ
     private ScheduledExecutorService scheduler;
     private ScheduledFuture<?> futureDrive;
@@ -123,6 +125,12 @@ public class Completion2 {
         if (remoteTask.checkRemoteCommand(RemoteTask.REMOTE_COMMAND_STOP)) { // PC で 's' キー押されたら走行終了
             res = false;
         }
+
+        if (body.getGyroValue() > STOP_GYRO || body.getGyroValue() < -STOP_GYRO ) { // 倒れた
+        	res = false;
+        }
+
+
         return res;
     }
 

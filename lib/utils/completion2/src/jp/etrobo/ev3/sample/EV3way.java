@@ -46,8 +46,27 @@ public class EV3way {
     private static final float TURN_MAX = 100.0F;
 
     //private static float Kp = 1.0F, Ki = 1.2F, Kd = 0.027F;
-    private static float Kp1 = 1.0F, Kp2 = 3.0F;
-    private static float baseForward = 60.0F;
+
+    //////////////
+    // Rコース  //
+    //////////////
+    /*
+    private static float Kp1 = 2.0F, Kp2 = 3.0F;
+    // 距離
+    private final int CALL_DISTANCE1 = 11000;
+    private final int CALL_DISTANCE2 = 11500;   //11500がいい
+    */
+
+    //////////////
+    // Lコース  //
+    //////////////
+
+    private static float Kp1 = 3.0F, Kp2 = 3.0F;  // Lコース
+    // 距離
+    private final int CALL_DISTANCE1 = 10000;
+    private final int CALL_DISTANCE2 = 10500;
+
+    private static float baseForward = 70.0F;
     private static float sensor_val;
     private static float target_val;
     private static float[] diff = new float[2];
@@ -84,10 +103,6 @@ public class EV3way {
 
     // 非同期メソッド
     private Thread call1, call2;
-
-    // 距離
-    private final int CALL_DISTANCE1 = 1000;
-    private final int CALL_DISTANCE2 = 2000;
 
     // 距離測定用のフラグ
     private Boolean callFlag1 = true;
@@ -302,7 +317,7 @@ public class EV3way {
      * ジャイロセンサーから角速度を取得する。
      * @return 角速度。
      */
-    private final float getGyroValue() {
+    public final float getGyroValue() {
         rate.fetchSample(sampleGyro, 0);
         // leJOS ではジャイロセンサーの角速度値が正負逆になっているので、
         // 倒立振子ライブラリの仕様に合わせる。
