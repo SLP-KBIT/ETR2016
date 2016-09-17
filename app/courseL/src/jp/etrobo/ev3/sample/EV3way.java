@@ -8,6 +8,7 @@ package jp.etrobo.ev3.sample;
 import jp.etrobo.ev3.balancer.Balancer;
 import lejos.hardware.Battery;
 import lejos.hardware.Sound;
+import lejos.hardware.lcd.LCD;
 import lejos.hardware.port.BasicMotorPort;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.Port;
@@ -253,18 +254,98 @@ public class EV3way {
     private boolean firstFlag = true;
     private int firstAngle;
 
+    public static final int FORWARD_SPEED = 20;
+    public static final int DIFF_SPEED = 5;
+
+    public static final int TAIL_ANGLE = 85;    // 尻尾走行時の角度[度]
+    public static final int DAWN_ANGLE = 63;    // 倒れた状態の角度[度]
+
+    public static final int DOWN_TIME = 7000;   // 倒れるのにかける時間[ms]
+    public static final int UP_TIME = 5000;   // 起き上がるのにかける時間[ms]
+    public static final int STRAIGHT_DISTANCE = 600; // 前進するときに進む距離
+
+    private static final float P_SLOW_GAIN          = 0.5F;
+    private static final float P_GETUP_GAIN         = 4.5F;
+    private static final float P_HARD_GAIN          = 6.0F;
+
+    private static final int   PWM_GETUP_MAX              = 80;       // 起き上がるときのPWM絶対最大値
+
     /**
      * ルックアップ制御
      */
     public boolean controlLookup() {
     	boolean nextFlag = false;
+    	float turn;
 
     	switch (lookupStateNum) {
-    	case 0: // ゲートを見つけるまで
-    		if (goUntilGate()) {
-    			lookupStateNum++;
-    		}
-    		break;
+    		case 0: // ゲートを見つけるまで
+    			if (goUntilGate()) {
+    				lookupStateNum++;
+    			}
+    			break;
+                case 1:  // 尻尾下ろし
+                    controlTailSlow(TAIL_ANGLE);
+                    turn = getPTurnValue();
+                    setBalancerParm(0.0F, turn);
+                    motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
+                    motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
+                    if (++timeCounter > 3000 / 4) { // 約3000ms
+                    	lookupStateNum++;
+                        timeCounter = 0;
+                    }
+                    break;
+                case 2:  // 揺れなくなるまで待機
+                    controlTailSlow(TAIL_ANGLE);
+                    turn = getPTurnValue();
+                    setBalancerParm(0.0F, turn);
+                    motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
+                    motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
+                    if(getGyroValue() < 0) {
+                    	lookupStateNum++;
+                    }
+                    break;
+                case 3:  // 倒れる
+                    controlTailPropUP(TAIL_ANGLE);
+                    setBalancerParm(0.0F, 0.0F, -30.0F);
+                    motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
+                    motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
+                    if(++timeCounter > 200/4){ // 約200ms
+                    	lookupStateNum++;
+                        timeCounter = 0;
+                    }
+                    break;
+                case 4:  // 角度キープ
+                    controlTailPropUP(TAIL_ANGLE);
+                    setBalancerParm(0.0F, 0.0F);
+                    motorPortL.controlMotor(0, 1); // 左モータPWM出力セット
+                    motorPortR.controlMotor(0, 1); // 右モータPWM出力セット
+                    if(++timeCounter > 2000/4){ // 約2000ms
+                    	lookupStateNum++;
+                        timeCounter = 0;
+                    }
+                    break;
+                case 5:  // さらに倒れる
+                    if (fallBackward(DAWN_ANGLE, DOWN_TIME)){
+                    	lookupStateNum++;
+                    }
+                    break;
+                case 6:  // 前進する
+                    controlTailPropUP(DAWN_ANGLE);
+                    if (goStraight(STRAIGHT_DISTANCE)) {
+                    	lookupStateNum++;
+                    }
+                    break;
+                case 7:  // 戻ってくる
+                    if (standUp(TAIL_ANGLE, UP_TIME)){
+                    	lookupStateNum++;
+                    }
+                    break;
+                case 8:  // キープ
+                    LCD.drawString("TailCount"+ motorPortT.getTachoCount(), 0, 4);
+                    controlTailPropUP(TAIL_ANGLE);
+                    motorPortL.controlMotor(0, 1); // 左モータPWM出力セット
+                    motorPortR.controlMotor(0, 1); // 右モータPWM出力セット
+                    break;
     	}
 
     	return nextFlag;
@@ -317,8 +398,170 @@ public class EV3way {
     	return false;
     }
 
+    private float getPTurnValue() {
+        float p; // 比例定数
+        float turn    =  0.0F; // 旋回命令
+        sensor_val = getBrightness();
+        target_val = THRESHOLD;
+        difference_val = sensor_val - target_val;
 
-    /**
+        if ( 0 < difference_val ) {
+        	p = Kp1 * difference_val;
+        } else {
+        	p = Kp2 * difference_val;
+        }
+        turn = TURN_MAX * p;
+        turn = turn * -1;  // 右エッジ
+
+        if (turn > TURN_MAX) {
+           	turn = TURN_MAX;
+        } else if ( -TURN_MAX > turn){
+           	turn = -TURN_MAX;
+        }
+
+        return turn;
+    }
+
+    /*
+     * 指定した角度まで、指定された時間をかけて倒れる
+     * @return 目標角度までの調整完了
+     */
+    private boolean fallBackward(int angle, int msec) {
+        if (firstFlag) {
+            firstAngle = motorPortT.getTachoCount();
+            firstFlag = false;
+        }
+
+        double progress = timeCounter /(msec/4.0);
+        int diffAngle = angle - firstAngle;
+        int currentAngle = (int) (firstAngle + (diffAngle * progress));
+
+        controlTailPropUP(currentAngle);
+        if (++timeCounter > msec/4){
+            timeCounter = 0;
+            firstFlag = true;
+            return true;
+        }
+        return false;
+    }
+
+    /*
+     * 指定した角度まで、指定された時間をかけて起き上がる
+     * @return 目標角度までの調整完了
+     */
+    private boolean standUp(int angle, int msec) {
+        if (firstFlag) {
+            firstAngle = motorPortT.getTachoCount();
+            firstFlag = false;
+        }
+
+        LCD.drawString("TailCount"+ motorPortT.getTachoCount(), 0, 3);
+        double progress = timeCounter / (msec/4.0);
+        int diffAngle = angle - firstAngle;
+        int currentAngle = (int) (firstAngle + (diffAngle * progress));
+
+        controlTailGetUp(currentAngle);
+        if (++timeCounter > msec/4){
+            timeCounter = 0;
+            firstFlag = true;
+            return true;
+        }
+        return false;
+    }
+
+    /*
+     * 前進する
+     */
+    private boolean goStraight(int distance) {
+        if (firstFlag) {
+            resetMotor();
+            firstFlag = false;
+        }
+        if (motorPortL.getTachoCount() > motorPortR.getTachoCount()){
+            motorPortL.controlMotor(FORWARD_SPEED, 1); // 左モータPWM出力セット
+            motorPortR.controlMotor(FORWARD_SPEED + DIFF_SPEED, 1); // 右モータPWM出力セット
+        } else {
+            motorPortL.controlMotor(FORWARD_SPEED + DIFF_SPEED, 1); // 左モータPWM出力セット
+            motorPortR.controlMotor(FORWARD_SPEED, 1); // 右モータPWM出力セット
+        }
+        if (motorPortL.getTachoCount() > distance){
+            motorPortL.controlMotor(0, 1); // 左モータPWM出力セット
+            motorPortR.controlMotor(0, 1); // 右モータPWM出力セット
+            return true;
+        }
+        return false;
+    }
+
+    /*
+     * 両サイドのモータエンコーダリセット
+     */
+    public void resetMotor(){
+        motorPortL.resetTachoCount();   // 左モータエンコーダリセット
+        motorPortR.resetTachoCount();   // 右モータエンコーダリセット
+    }
+
+    /*
+     * ゆっくり制御用モータの角度制御
+     * @param angle モータ目標角度[度]
+     */
+    public void controlTailSlow(int angle) {
+        float pwm = (float)(angle - motorPortT.getTachoCount()) * P_SLOW_GAIN; // 比例制御
+        // PWM出力飽和処理
+        if (pwm > PWM_ABS_MAX) {
+            pwm = PWM_ABS_MAX;
+        } else if (pwm < -PWM_ABS_MAX) {
+            pwm = -PWM_ABS_MAX;
+        }
+        motorPortT.controlMotor((int)pwm, 1);
+    }
+
+    /*
+     * 尻尾状態を維持する用モータの角度制御
+     * @param angle モータ目標角度[度]
+     */
+    public void controlTailPropUP(int angle) {
+        float pwm = (float)(angle - motorPortT.getTachoCount()); // 比例制御
+        // 尻尾が目標値より高いか低いかで出力の比例定数を設定
+        if (0 < pwm) {
+        	pwm = pwm * P_HARD_GAIN;
+        } else if(pwm > 0) {
+        	pwm = pwm * P_GAIN ;
+        }
+
+        // PWM出力飽和処理
+        if (pwm > PWM_ABS_MAX) {
+            pwm = PWM_ABS_MAX;
+        } else if (pwm < -PWM_ABS_MAX) {
+            pwm = -PWM_ABS_MAX;
+        }
+        LCD.drawString("pwm:"+pwm, 0, 5);
+        motorPortT.controlMotor((int)pwm, 1);
+    }
+
+    /*
+     * 尻尾状態で起き上がる用モータの角度制御
+     * @param angle モータ目標角度[度]
+     */
+    public void controlTailGetUp(int angle) {
+        float pwm = (float)(angle - motorPortT.getTachoCount()); // 比例制御
+        // 尻尾が目標値より高いか低いかで出力の比例定数を設定
+        if (0 < pwm) {
+        	pwm = pwm * P_GETUP_GAIN ;
+        } else if(pwm > 0) {
+        	pwm = pwm * P_GAIN;
+        }
+
+        // PWM出力飽和処理
+        if (pwm > PWM_GETUP_MAX ) {
+            pwm = PWM_GETUP_MAX ;
+        } else if (pwm < -PWM_GETUP_MAX ) {
+            pwm = -PWM_GETUP_MAX ;
+        }
+        motorPortT.controlMotor((int)pwm, 1);
+    }
+
+
+    /*
      * 走行体完全停止用モータの角度制御
      * @param angle モータ目標角度[度]
      */
@@ -332,6 +575,31 @@ public class EV3way {
         }
         motorPortT.controlMotor((int)pwm, 1);
     }
+
+    /*
+     * バランサーAPIの設定
+     *
+     */
+    public void setBalancerParm(float forward, float turn){
+        float gyroNow = getGyroValue();                 // ジャイロセンサー値
+        int thetaL = motorPortL.getTachoCount();        // 左モータ回転角度
+        int thetaR = motorPortR.getTachoCount();        // 右モータ回転角度
+        int battery = Battery.getVoltageMilliVolt();    // バッテリー電圧[mV]
+        Balancer.control (forward, turn, gyroNow, GYRO_OFFSET, thetaL, thetaR, battery); // 倒立振子制御
+    }
+
+    /*
+     * バランサーAPIの設定
+     *
+     */
+    public void setBalancerParm(float forward, float turn, float gyroOffset){
+        float gyroNow = getGyroValue();                 // ジャイロセンサー値
+        int thetaL = motorPortL.getTachoCount();        // 左モータ回転角度
+        int thetaR = motorPortR.getTachoCount();        // 右モータ回転角度
+        int battery = Battery.getVoltageMilliVolt();    // バッテリー電圧[mV]
+        Balancer.control (forward, turn, gyroNow, gyroOffset, thetaL, thetaR, battery); // 倒立振子制御
+    }
+
 
     /*
      * 超音波センサーによる障害物検知
