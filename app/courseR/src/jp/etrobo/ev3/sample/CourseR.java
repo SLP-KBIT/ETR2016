@@ -18,7 +18,7 @@ import lejos.utility.Delay;
 /**
  * 2輪倒立振子ライントレースロボットの leJOS EV3 用 Java サンプルプログラム。
  */
-public class Completion2 {
+public class CourseR {
     private EV3way         body;            // EV3 本体
     private boolean        touchPressed;    // タッチセンサーが押されたかの状態
     private int standTailAngle;             // 倒立状態の尻尾の角度
@@ -41,7 +41,7 @@ public class Completion2 {
      * コンストラクタ。
      * スケジューラとタスクオブジェクトを作成。
      */
-    public Completion2() {
+    public CourseR() {
         body = new EV3way();
         body.idling();
         body.reset();
@@ -175,7 +175,7 @@ public class Completion2 {
      */
     public static void main(String[] args) {
     	LCD.drawString("Please Wait...  ", 0, 4);
-		Completion2 program = new Completion2();
+		CourseR program = new CourseR();
 
         // 尻尾の角度の調整
         LCD.drawString("Setting Angle", 0, 4);
