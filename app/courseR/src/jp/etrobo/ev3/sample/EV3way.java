@@ -16,7 +16,6 @@ import lejos.hardware.port.TachoMotorPort;
 import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.hardware.sensor.EV3GyroSensor;
 import lejos.hardware.sensor.EV3TouchSensor;
-import lejos.hardware.sensor.EV3UltrasonicSensor;
 import lejos.hardware.sensor.SensorMode;
 import lejos.robotics.SampleProvider;
 import lejos.utility.Delay;
@@ -33,19 +32,14 @@ public class EV3way {
     private static final Port  MOTORPORT_RWHEEL     = MotorPort.B;    // 右モータポート
     private static final Port  MOTORPORT_TAIL       = MotorPort.A;    // 尻尾モータポート
     private static final Port  SENSORPORT_TOUCH     = SensorPort.S1;  // タッチセンサーポート
-    private static final Port  SENSORPORT_SONAR     = SensorPort.S2;  // 超音波センサーポート
     private static final Port  SENSORPORT_COLOR     = SensorPort.S3;  // カラーセンサーポート
     private static final Port  SENSORPORT_GYRO      = SensorPort.S4;  // ジャイロセンサーポート
     private static final float GYRO_OFFSET          = 0.0F;           // ジャイロセンサーオフセット値
-    private static final float SONAR_ALERT_DISTANCE = 0.3F;           // 超音波センサーによる障害物検知距離[m]
     private static final float P_GAIN               = 2.5F;           // 完全停止用モータ制御比例係数
     private static final int   PWM_ABS_MAX          = 60;             // 完全停止用モータ制御PWM絶対最大値
     private static final float THRESHOLD = 0.30F;  // ライントレースの目標値
 
-    //private static final float DELTA_T = 0.004F;
     private static final float TURN_MAX = 100.0F;
-
-    //private static float Kp = 1.0F, Ki = 1.2F, Kd = 0.027F;
 
     //////////////
     // Rコース  //
@@ -53,13 +47,12 @@ public class EV3way {
     private static float Kp1 = 2.0F, Kp2 = 3.0F;
     // 距離
     private final int CALL_DISTANCE1 = 11000;
-    private final int CALL_DISTANCE2 = 11500;   //11500がいい
+    private final int CALL_DISTANCE2 = 11500;   //ゴールと階段の間
 
     private static float baseForward = 40.0F;
     private static float sensor_val;
     private static float target_val;
     private static float[] diff = new float[2];
-    private static float integral;
 
     // モータ制御用オブジェクト
     // EV3LargeRegulatedMotor では PWM 制御ができないので、TachoMotorPort を利用する
@@ -71,11 +64,6 @@ public class EV3way {
     private EV3TouchSensor touch;
     private SensorMode touchMode;
     private float[] sampleTouch;
-
-    // 超音波センサ
-    private EV3UltrasonicSensor sonar;
-    private SampleProvider distanceMode;  // 距離検出モード
-    private float[] sampleDistance;
 
     // カラーセンサ
     private EV3ColorSensor colorSensor;
@@ -113,12 +101,6 @@ public class EV3way {
         touchMode = touch.getTouchMode();
         sampleTouch = new float[touchMode.sampleSize()];
 
-        // 超音波センサー
-        sonar = new EV3UltrasonicSensor(SENSORPORT_SONAR);
-        distanceMode = sonar.getDistanceMode(); // 距離検出モード
-        sampleDistance = new float[distanceMode.sampleSize()];
-        sonar.enable();
-
         // カラーセンサー
         colorSensor = new EV3ColorSensor(SENSORPORT_COLOR);
         redMode = colorSensor.getRedMode();     // 輝度検出モード
@@ -149,7 +131,6 @@ public class EV3way {
         for (int i=0; i < 1500; i++) {
             motorPortL.controlMotor(0, 0);
             getBrightness();
-            getSonarDistance();
             getGyroValue();
             Battery.getVoltageMilliVolt();
             Balancer.control(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 8000);
@@ -179,7 +160,6 @@ public class EV3way {
         motorPortR.close();
         motorPortT.close();
         colorSensor.setFloodlight(false);
-        sonar.disable();
     }
 
     /**
@@ -196,7 +176,6 @@ public class EV3way {
      */
     public void controlDrive() {
         if (++driveCallCounter >= 40/4) {  // 約40msごとに障害物検知
-            sonarAlert = alertObstacle();  // 障害物検知
             driveCallCounter = 0;
         }
         float forward =  0.0F; // 前後進命令
@@ -211,17 +190,13 @@ public class EV3way {
             sensor_val = getBrightness();
             target_val = THRESHOLD;
 
-            //diff[0] = diff[1];
             diff[1] = sensor_val - target_val;
-            //integral += (diff[1] + diff[0]) / 2.0 * DELTA_T;
 
             if ( 0 < diff[1] ) {
             	p = Kp1 * diff[1];
             } else {
             	p = Kp2 * diff[1];
             }
-            //i = Ki * integral;
-            //sd = Kd * (diff[1] - diff[0]) / DELTA_T;
             turn = TURN_MAX * p;
             turn = turn * -1;  // 右エッジ
 
@@ -239,19 +214,6 @@ public class EV3way {
         Balancer.control (forward, turn, gyroNow, GYRO_OFFSET, thetaL, thetaR, battery); // 倒立振子制御
         motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
         motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
-
-/*
-        // 距離測定
-        if(motorPortR.getTachoCount() > CALL_DISTANCE1 && callFlag1) {
-        	call1.start();
-        	callFlag1 = false;
-        }
-
-        if(motorPortR.getTachoCount() > CALL_DISTANCE2 && callFlag2) {
-        	call2.start();
-        	callFlag2 = false;
-        }
-*/
     }
 
     /**
@@ -267,27 +229,6 @@ public class EV3way {
             pwm = -PWM_ABS_MAX;
         }
         motorPortT.controlMotor((int)pwm, 1);
-    }
-
-    /*
-     * 超音波センサーによる障害物検知
-     * @return true(障害物あり)/false(障害物無し)
-     */
-    private boolean alertObstacle() {
-        float distance = getSonarDistance();
-        if ((distance <= SONAR_ALERT_DISTANCE) && (distance >= 0)) {
-            return true;  // 障害物を検知
-        }
-        return false;
-    }
-
-    /*
-     * 超音波センサーにより障害物との距離を取得する。
-     * @return 障害物との距離(m)。
-     */
-    private final float getSonarDistance() {
-        distanceMode.fetchSample(sampleDistance, 0);
-        return sampleDistance[0];
     }
 
     /*
