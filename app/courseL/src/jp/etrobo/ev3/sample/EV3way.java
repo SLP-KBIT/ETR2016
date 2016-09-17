@@ -245,12 +245,36 @@ public class EV3way {
         return nextFlag;
     }
 
+    //
+    // ルックアップに使う変数 (こんな書き方したらダメ、そのうち直す)
+    //
+    private int lookupStateNum = 0;
+    private int timeCounter = 0;
+    private boolean firstFlag = true;
+    private int firstAngle;
+
     /**
      * ルックアップ制御
      */
     public boolean controlLookup() {
     	boolean nextFlag = false;
 
+    	switch (lookupStateNum) {
+    	case 0: // ゲートを見つけるまで
+    		if (goUntilGate()) {
+    			lookupStateNum++;
+    		}
+    		break;
+    	}
+
+    	return nextFlag;
+    }
+
+
+    /*
+     * ゲート検知までゆっくり前進
+     */
+    private boolean goUntilGate() {
         if (++driveCallCounter >= 40/4) {  // 約40msごとに障害物検知
             sonarAlert = alertObstacle();  // 障害物検知
             driveCallCounter = 0;
@@ -286,8 +310,13 @@ public class EV3way {
         motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
         motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
 
-    	return nextFlag;
+        // ゲートを見つけたら次へ
+        if (sonarAlert) {
+        	return true;
+        }
+    	return false;
     }
+
 
     /**
      * 走行体完全停止用モータの角度制御
