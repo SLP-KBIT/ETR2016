@@ -50,23 +50,12 @@ public class EV3way {
     //////////////
     // Rコース  //
     //////////////
-    /*
     private static float Kp1 = 2.0F, Kp2 = 3.0F;
     // 距離
     private final int CALL_DISTANCE1 = 11000;
     private final int CALL_DISTANCE2 = 11500;   //11500がいい
-    */
 
-    //////////////
-    // Lコース  //
-    //////////////
-
-    private static float Kp1 = 3.0F, Kp2 = 3.0F;  // Lコース
-    // 距離
-    private final int CALL_DISTANCE1 = 10000;
-    private final int CALL_DISTANCE2 = 10500;
-
-    private static float baseForward = 70.0F;
+    private static float baseForward = 40.0F;
     private static float sensor_val;
     private static float target_val;
     private static float[] diff = new float[2];
@@ -217,10 +206,7 @@ public class EV3way {
             turn = 0.0F;
         } else {
             forward = baseForward;  // 前進命令
-
-            //-- ここからPID制御
-            //float p, i, d;
-            float p;
+            float p; // 比例定数
 
             sensor_val = getBrightness();
             target_val = THRESHOLD;
@@ -254,7 +240,7 @@ public class EV3way {
         motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
         motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
 
-
+/*
         // 距離測定
         if(motorPortR.getTachoCount() > CALL_DISTANCE1 && callFlag1) {
         	call1.start();
@@ -265,7 +251,7 @@ public class EV3way {
         	call2.start();
         	callFlag2 = false;
         }
-
+*/
     }
 
     /**
