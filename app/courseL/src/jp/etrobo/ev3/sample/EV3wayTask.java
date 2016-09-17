@@ -5,11 +5,14 @@
  */
 package jp.etrobo.ev3.sample;
 
+import lejos.hardware.Button;
+
 /**
  * EV3way を制御するタスク。
  */
 public class EV3wayTask implements Runnable {
     private EV3way body;
+    private int stateNum = 0;
 
     /**
      * コンストラクタ。
@@ -24,7 +27,19 @@ public class EV3wayTask implements Runnable {
      */
     @Override
     public void run() {
-        body.controlDrive();
-        body.controlTail(EV3way.TAIL_ANGLE_DRIVE);
+    	switch (stateNum) {
+    		case 0: // コース完走
+    			if (body.controlDrive()) {
+    				stateNum++;
+    			}
+    			body.controlTail(EV3way.TAIL_ANGLE_DRIVE);
+    			break;
+    		case 1: //ルックアップ
+    			Button.LEDPattern(1);
+    			if (body.controlLookup()) {
+    				//stateNum++;
+    			}
+    			break;
+    	}
     }
 }

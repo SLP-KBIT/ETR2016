@@ -41,8 +41,6 @@ public class EV3way {
     private static final float P_GAIN               = 2.5F;           // 完全停止用モータ制御比例係数
     private static final int   PWM_ABS_MAX          = 60;             // 完全停止用モータ制御PWM絶対最大値
     private static final float THRESHOLD = 0.30F;  // ライントレースの目標値
-
-    //private static final float DELTA_T = 0.004F;
     private static final float TURN_MAX = 100.0F;
 
     //////////////
@@ -53,11 +51,13 @@ public class EV3way {
     // 距離
     private final int CALL_DISTANCE1 = 10000;
     private final int CALL_DISTANCE2 = 10500;  // ゴールとルックアップの間
+    //private final int comoletionDistance = 10500;
+    private final int comoletionDistance = 1000;
 
     private static float baseForward = 70.0F;
     private static float sensor_val;
     private static float target_val;
-    private static float[] diff = new float[2];
+    private static float difference_val;
 
     // モータ制御用オブジェクト
     // EV3LargeRegulatedMotor では PWM 制御ができないので、TachoMotorPort を利用する
@@ -192,42 +192,33 @@ public class EV3way {
     /**
      * 走行制御。
      */
-    public void controlDrive() {
-        if (++driveCallCounter >= 40/4) {  // 約40msごとに障害物検知
-            sonarAlert = alertObstacle();  // 障害物検知
-            driveCallCounter = 0;
-        }
+    public boolean controlDrive() {
+    	boolean nextFlag = false;
         float forward =  0.0F; // 前後進命令
         float turn    =  0.0F; // 旋回命令
-        if (sonarAlert) {           // 障害物を検知したら停止
-            forward = 0.0F;
-            turn = 0.0F;
+        // 一定以上進んだらルックアップへ
+        if (motorPortR.getTachoCount() > comoletionDistance) {
+        	nextFlag = true;
+        }
+        forward = baseForward;  // 前進命令
+        float p; // 比例定数
+
+        sensor_val = getBrightness();
+        target_val = THRESHOLD;
+        difference_val = sensor_val - target_val;
+
+        if ( 0 < difference_val ) {
+        	p = Kp1 * difference_val;
         } else {
-            forward = baseForward;  // 前進命令
-            float p; // 比例定数
+        	p = Kp2 * difference_val;
+        }
+        turn = TURN_MAX * p;
+        turn = turn * -1;  // 右エッジ
 
-            sensor_val = getBrightness();
-            target_val = THRESHOLD;
-
-            //diff[0] = diff[1];
-            diff[1] = sensor_val - target_val;
-            //integral += (diff[1] + diff[0]) / 2.0 * DELTA_T;
-
-            if ( 0 < diff[1] ) {
-            	p = Kp1 * diff[1];
-            } else {
-            	p = Kp2 * diff[1];
-            }
-            //i = Ki * integral;
-            //sd = Kd * (diff[1] - diff[0]) / DELTA_T;
-            turn = TURN_MAX * p;
-            turn = turn * -1;  // 右エッジ
-
-            if (turn > TURN_MAX) {
-            	turn = TURN_MAX;
-            } else if ( -TURN_MAX > turn){
-            	turn = -TURN_MAX;
-            }
+        if (turn > TURN_MAX) {
+        	turn = TURN_MAX;
+        } else if ( -TURN_MAX > turn){
+        	turn = -TURN_MAX;
         }
 
         float gyroNow = getGyroValue();                 // ジャイロセンサー値
@@ -250,6 +241,52 @@ public class EV3way {
         	callFlag2 = false;
         }
 */
+
+        return nextFlag;
+    }
+
+    /**
+     * ルックアップ制御
+     */
+    public boolean controlLookup() {
+    	boolean nextFlag = false;
+
+        if (++driveCallCounter >= 40/4) {  // 約40msごとに障害物検知
+            sonarAlert = alertObstacle();  // 障害物検知
+            driveCallCounter = 0;
+        }
+        float forward =  0.0F; // 前後進命令
+        float turn    =  0.0F; // 旋回命令
+        forward = 10.0F;  // 前進命令
+        float p; // 比例定数
+
+        sensor_val = getBrightness();
+        target_val = THRESHOLD;
+        difference_val = sensor_val - target_val;
+
+        if ( 0 < difference_val ) {
+        	p = Kp1 * difference_val;
+        } else {
+        	p = Kp2 * difference_val;
+        }
+        turn = TURN_MAX * p;
+        turn = turn * -1;  // 右エッジ
+
+        if (turn > TURN_MAX) {
+           	turn = TURN_MAX;
+        } else if ( -TURN_MAX > turn){
+           	turn = -TURN_MAX;
+        }
+
+        float gyroNow = getGyroValue();                 // ジャイロセンサー値
+        int thetaL = motorPortL.getTachoCount();        // 左モータ回転角度
+        int thetaR = motorPortR.getTachoCount();        // 右モータ回転角度
+        int battery = Battery.getVoltageMilliVolt();    // バッテリー電圧[mV]
+        Balancer.control (forward, turn, gyroNow, GYRO_OFFSET, thetaL, thetaR, battery); // 倒立振子制御
+        motorPortL.controlMotor(Balancer.getPwmL(), 1); // 左モータPWM出力セット
+        motorPortR.controlMotor(Balancer.getPwmR(), 1); // 右モータPWM出力セット
+
+    	return nextFlag;
     }
 
     /**
