@@ -52,10 +52,10 @@ public class EV3way {
     // 距離
     private final int CALL_DISTANCE1 = 10000;
     private final int CALL_DISTANCE2 = 10500;  // ゴールとルックアップの間
-    //private final int comoletionDistance = 10500;
-    private final int comoletionDistance = 1000;
+    private final int comoletionDistance = 10500;
+    //private final int comoletionDistance = 1000;
 
-    private static float baseForward = 70.0F;
+    private static float baseForward = 50.0F;
     private static float sensor_val;
     private static float target_val;
     private static float difference_val;
@@ -335,13 +335,29 @@ public class EV3way {
                     	lookupStateNum++;
                     }
                     break;
-                case 7:  // 戻ってくる
+                case 7:  // 起き上がる
                     if (standUp(TAIL_ANGLE, UP_TIME)){
                     	lookupStateNum++;
+                    	timeCounter = 0;
                     }
                     break;
                 case 8:  // キープ
-                    LCD.drawString("TailCount"+ motorPortT.getTachoCount(), 0, 4);
+                    //LCD.drawString("TailCount"+ motorPortT.getTachoCount(), 0, 4);
+                    controlTailPropUP(TAIL_ANGLE);
+                    motorPortL.controlMotor(0, 1); // 左モータPWM出力セット
+                    motorPortR.controlMotor(0, 1); // 右モータPWM出力セット
+                    if(++timeCounter > 4000/4){ // 約4000ms
+                    	lookupStateNum++;
+                        timeCounter = 0;
+                    }
+                    break;
+                case 9:  // 前進する
+                    controlTailPropUP(TAIL_ANGLE);
+                    if (goStraight(2000)) {
+                    	lookupStateNum++;
+                    }
+                    break;
+                case 10:  // キープ
                     controlTailPropUP(TAIL_ANGLE);
                     motorPortL.controlMotor(0, 1); // 左モータPWM出力セット
                     motorPortR.controlMotor(0, 1); // 右モータPWM出力セット
